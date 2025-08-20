@@ -1,207 +1,227 @@
 <template lang="pug">
   .editor-tiptap-notion
-    // Bubble Menu per selezione testo
+    // Bubble Menu con design Notion-like
     bubble-menu.bubble-menu(
-      v-if="editor && !isMobile",
+      v-if="editor",
       :editor="editor",
-      :tippy-options="{ duration: 100 }"
+      :tippy-options="{ duration: 100, placement: 'top' }"
     )
       .bubble-menu-content
-        v-btn.bubble-btn(
-          icon,
-          x-small,
-          :class="{ active: editor.isActive('bold') }",
-          @click="editor.chain().focus().toggleBold().run()"
-        )
-          v-icon(size="16") mdi-format-bold
+        .bubble-menu-group
+          .bubble-menu-button(
+            :class="{ active: editor.isActive('bold') }",
+            @click="editor.chain().focus().toggleBold().run()"
+          )
+            v-icon(size="14") mdi-format-bold
+          
+          .bubble-menu-button(
+            :class="{ active: editor.isActive('italic') }",
+            @click="editor.chain().focus().toggleItalic().run()"
+          )
+            v-icon(size="14") mdi-format-italic
+          
+          .bubble-menu-button(
+            :class="{ active: editor.isActive('underline') }",
+            @click="editor.chain().focus().toggleUnderline().run()"
+          )
+            v-icon(size="14") mdi-format-underline
+          
+          .bubble-menu-button(
+            :class="{ active: editor.isActive('strike') }",
+            @click="editor.chain().focus().toggleStrike().run()"
+          )
+            v-icon(size="14") mdi-format-strikethrough
+          
+          .bubble-menu-button(
+            :class="{ active: editor.isActive('code') }",
+            @click="editor.chain().focus().toggleCode().run()"
+          )
+            v-icon(size="14") mdi-code-tags
         
-        v-btn.bubble-btn(
-          icon,
-          x-small,
-          :class="{ active: editor.isActive('italic') }",
-          @click="editor.chain().focus().toggleItalic().run()"
-        )
-          v-icon(size="16") mdi-format-italic
+        .bubble-menu-divider
         
-        v-btn.bubble-btn(
-          icon,
-          x-small,
-          :class="{ active: editor.isActive('underline') }",
-          @click="editor.chain().focus().toggleUnderline().run()"
-        )
-          v-icon(size="16") mdi-format-underline
-        
-        v-btn.bubble-btn(
-          icon,
-          x-small,
-          :class="{ active: editor.isActive('strike') }",
-          @click="editor.chain().focus().toggleStrike().run()"
-        )
-          v-icon(size="16") mdi-format-strikethrough
-        
-        v-btn.bubble-btn(
-          icon,
-          x-small,
-          :class="{ active: editor.isActive('code') }",
-          @click="editor.chain().focus().toggleCode().run()"
-        )
-          v-icon(size="16") mdi-code-tags
-        
-        v-divider.mx-1(vertical)
-        
-        v-btn.bubble-btn(
-          icon,
-          x-small,
-          :class="{ active: editor.isActive('link') }",
-          @click="setLinkFromSelection"
-        )
-          v-icon(size="16") mdi-link
-        
-        v-btn.bubble-btn(
-          icon,
-          x-small,
-          @click="aiImproveText"
-        )
-          v-icon(size="16", color="purple") mdi-robot
+        .bubble-menu-group
+          .bubble-menu-button(
+            :class="{ active: editor.isActive('link') }",
+            @click="setLinkFromSelection"
+          )
+            v-icon(size="14") mdi-link
+          
+          .bubble-menu-button.ai-button(
+            @click="aiImproveText"
+          )
+            v-icon(size="14") mdi-robot
+            .ai-sparkle ✨
 
-    // Floating Menu per linee vuote
+    // Floating Menu con design Notion-like
     floating-menu.floating-menu(
-      v-if="editor && !isMobile",
+      v-if="editor",
       :editor="editor",
-      :tippy-options="{ duration: 100 }"
+      :tippy-options="{ duration: 100, placement: 'left' }"
     )
       .floating-menu-content
-        v-btn.floating-btn(
-          icon,
-          small,
-          @click="toggleSlashMenu"
-        )
-          v-icon mdi-plus
+        .floating-menu-handle
+          .floating-menu-dots
+            .dot
+            .dot
+            .dot
+            .dot
+            .dot
+            .dot
         
-        v-btn.floating-btn(
-          icon,
-          small,
-          @click="aiContinueWriting"
-        )
-          v-icon(color="purple") mdi-robot
+        .floating-menu-actions
+          .floating-action-button(@click="toggleSlashMenu")
+            v-icon(size="18") mdi-plus
+          
+          .floating-action-button.ai-button(@click="aiContinueWriting")
+            v-icon(size="18") mdi-robot
 
-    // Area Editor principale
-    .editor-content-wrapper
-      editor-content.editor-content(ref="editor", :editor="editor")
+    // Area Editor principale con layout Notion
+    .editor-container
+      .editor-content-area
+        // Titolo della pagina (opzionale)
+        .page-header(v-if="showPageTitle")
+          .page-title(
+            contenteditable="true",
+            placeholder="Untitled",
+            @input="updatePageTitle"
+          ) {{ pageTitle }}
+        
+        // Area editor principale
+        .editor-wrapper
+          editor-content.notion-editor(:editor="editor")
 
-    // Slash Menu
-    v-menu.slash-menu(
-      v-model="slashMenuOpen",
-      :position-x="slashMenuPosition.x",
-      :position-y="slashMenuPosition.y",
-      :close-on-content-click="true",
-      offset-y,
-      max-width="320"
+    // Slash Menu con design moderno
+    .slash-menu-overlay(v-if="slashMenuOpen", @click="slashMenuOpen = false")
+    .slash-menu(
+      v-if="slashMenuOpen",
+      :style="{ left: slashMenuPosition.x + 'px', top: slashMenuPosition.y + 'px' }"
     )
-      v-card
-        v-card-text.pa-0
-          v-list.py-0(dense)
-            v-subheader.px-4.py-2 Formattazione Testo
-            v-list-item(v-for='command in textCommands', :key='command.key', @click='executeCommand(command)')
-              v-list-item-avatar
-                v-icon(:color='command.color', size="20") {{ command.icon }}
-              v-list-item-content
-                v-list-item-title.body-2 {{ command.title }}
-                v-list-item-subtitle.caption {{ command.description }}
-              v-list-item-action(v-if="command.shortcut")
-                v-chip.caption(x-small, outlined) {{ command.shortcut }}
-
-            v-divider.my-1
-
-            v-subheader.px-4.py-2 Contenuti Media
-            v-list-item(v-for='command in mediaCommands', :key='command.key', @click='executeCommand(command)')
-              v-list-item-avatar
-                v-icon(:color='command.color', size="20") {{ command.icon }}
-              v-list-item-content
-                v-list-item-title.body-2 {{ command.title }}
-                v-list-item-subtitle.caption {{ command.description }}
-
-            v-divider.my-1
-
-            v-subheader.px-4.py-2 AI & Automazione
-            v-list-item(v-for='command in aiCommands', :key='command.key', @click='executeCommand(command)')
-              v-list-item-avatar
-                v-icon(:color='command.color', size="20") {{ command.icon }}
-              v-list-item-content
-                v-list-item-title.body-2 {{ command.title }}
-                v-list-item-subtitle.caption {{ command.description }}
-              v-list-item-action
-                v-chip.caption(x-small, color='purple', text-color='white') AI
-
-    // Dialog per inserimento link
-    v-dialog(v-model="insertLinkDialog", max-width="500")
-      v-card
-        v-card-title
-          v-icon.mr-2 mdi-link
-          | Inserisci Link
-        v-card-text
-          v-text-field(
-            label="URL del link",
-            v-model="linkUrl",
-            placeholder="https://esempio.com",
-            outlined,
-            dense,
-            @keyup.enter="confirmInsertLink"
+      .slash-menu-content
+        .slash-menu-search
+          v-icon(size="16", color="grey") mdi-magnify
+          input.slash-search-input(
+            placeholder="Search for blocks, commands...",
+            v-model="slashSearchQuery",
+            @input="filterSlashCommands"
           )
-          v-text-field(
-            label="Testo del link (opzionale)",
-            v-model="linkText",
-            outlined,
-            dense,
-            @keyup.enter="confirmInsertLink"
-          )
-        v-card-actions
-          v-spacer
-          v-btn(text, @click="insertLinkDialog = false") Annulla
-          v-btn(color="primary", @click="confirmInsertLink") Inserisci
+        
+        .slash-menu-sections
+          .slash-section(v-for="section in filteredSlashSections", :key="section.title")
+            .slash-section-title {{ section.title }}
+            .slash-command(
+              v-for="command in section.commands",
+              :key="command.key",
+              @click="executeCommand(command)"
+            )
+              .command-icon
+                v-icon(:color="command.color", size="18") {{ command.icon }}
+              .command-content
+                .command-title {{ command.title }}
+                .command-description {{ command.description }}
+              .command-shortcut(v-if="command.shortcut") {{ command.shortcut }}
 
-    // Dialog per inserimento immagine  
-    v-dialog(v-model="insertImageDialog", max-width="500")
-      v-card
-        v-card-title
-          v-icon.mr-2 mdi-image
-          | Inserisci Immagine
-        v-card-text
-          v-text-field(
-            label="URL dell'immagine",
-            v-model="imageUrl",
-            placeholder="https://esempio.com/immagine.jpg",
-            outlined,
-            dense,
-            @keyup.enter="confirmInsertImage"
-          )
-          v-text-field(
-            label="Testo alternativo",
-            v-model="imageAlt",
-            outlined,
-            dense,
-            @keyup.enter="confirmInsertImage"
-          )
-        v-card-actions
-          v-spacer
-          v-btn(text, @click="insertImageDialog = false") Annulla
-          v-btn(color="primary", @click="confirmInsertImage") Inserisci
+    // Dialog per link con design Notion
+    v-dialog(v-model="insertLinkDialog", max-width="480", content-class="notion-dialog")
+      .link-dialog
+        .dialog-header
+          .dialog-title Add Link
+          .dialog-close(@click="insertLinkDialog = false")
+            v-icon mdi-close
+        
+        .dialog-content
+          .input-group
+            .input-label URL
+            .input-field
+              v-icon(size="16", color="grey") mdi-link
+              input.link-input(
+                placeholder="Paste or type a link...",
+                v-model="linkUrl",
+                @keyup.enter="confirmInsertLink"
+              )
+          
+          .input-group(v-if="linkText")
+            .input-label Text
+            .input-field
+              input.link-input(
+                placeholder="Link text",
+                v-model="linkText",
+                @keyup.enter="confirmInsertLink"
+              )
+        
+        .dialog-actions
+          .dialog-button.secondary(@click="insertLinkDialog = false") Cancel
+          .dialog-button.primary(@click="confirmInsertLink") Add Link
 
-    // Loading overlay per AI
-    v-overlay(v-model="aiLoading", opacity="0.8")
-      v-progress-circular(indeterminate, size="64", color="purple")
-      .mt-4.text-center AI sta generando...
+    // Dialog per immagini con design Notion
+    v-dialog(v-model="insertImageDialog", max-width="480", content-class="notion-dialog")
+      .image-dialog
+        .dialog-header
+          .dialog-title Add Image
+          .dialog-close(@click="insertImageDialog = false")
+            v-icon mdi-close
+        
+        .dialog-content
+          .upload-area
+            .upload-zone
+              v-icon(size="32", color="grey") mdi-image-plus
+              .upload-text Drop an image, or 
+                span.upload-link click to browse
+          
+          .input-divider
+            .divider-line
+            .divider-text or
+            .divider-line
+          
+          .input-group
+            .input-label Image URL
+            .input-field
+              v-icon(size="16", color="grey") mdi-link
+              input.image-input(
+                placeholder="Paste the image link...",
+                v-model="imageUrl",
+                @keyup.enter="confirmInsertImage"
+              )
+          
+          .input-group
+            .input-label Alt text (optional)
+            .input-field
+              input.image-input(
+                placeholder="Alternative text for accessibility",
+                v-model="imageAlt",
+                @keyup.enter="confirmInsertImage"
+              )
+        
+        .dialog-actions
+          .dialog-button.secondary(@click="insertImageDialog = false") Cancel
+          .dialog-button.primary(@click="confirmInsertImage") Add Image
 
-    // Status Bar
-    v-system-bar.editor-status-bar(dark, status, color='grey darken-3', height="24")
-      .caption.editor-locale {{locale.toUpperCase()}}
-      .caption.px-3 /{{path}}
-      template(v-if='$vuetify.breakpoint.mdAndUp')
-        v-spacer
-        .caption TipTap Notion-like Editor
-        v-spacer
-        .caption(v-if='showCharacterCount') 
-          | {{stats.words}} parole • {{stats.characters}} caratteri
+    // AI Loading overlay con design elegante
+    .ai-overlay(v-if="aiLoading")
+      .ai-loading-content
+        .ai-spinner
+          .spinner-ring
+          .spinner-ring
+          .spinner-ring
+        .ai-loading-text
+          .ai-text-line AI is thinking...
+          .ai-text-subline This may take a few seconds
+
+    // Status bar minimale stile Notion
+    .editor-status-bar
+      .status-left
+        .status-item.locale {{locale.toUpperCase()}}
+        .status-divider
+        .status-item.path /{{path}}
+      
+      .status-center(v-if="$vuetify.breakpoint.lgAndUp")
+        .status-item.editor-name TipTap • Notion-style
+      
+      .status-right(v-if="showCharacterCount")
+        .status-item.stats {{ stats.words }} words · {{ stats.characters }} chars
+        .status-item.ai-indicator(v-if="aiEnabled") 
+          v-icon(size="12", color="purple") mdi-robot
+          | AI Ready
 </template>
 
 <script>
@@ -224,7 +244,6 @@ import Typography from '@tiptap/extension-typography'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
-import YouTube from '@tiptap/extension-youtube'
 
 export default {
   name: 'EditorTiptap',
@@ -254,161 +273,170 @@ export default {
       imageAlt: '',
       aiLoading: false,
       showCharacterCount: true,
+      showPageTitle: false,
+      pageTitle: 'Untitled',
+      aiEnabled: true,
+      
+      // Slash Menu
       slashMenuOpen: false,
       slashMenuPosition: { x: 0, y: 0 },
+      slashSearchQuery: '',
       
-      // Slash Commands
-      textCommands: [
+      // Comandi organizzati per sezioni
+      slashSections: [
         {
-          key: 'heading1',
-          title: 'Titolo 1',
-          description: 'Titolo principale grande',
-          icon: 'mdi-format-header-1',
-          color: 'blue',
-          shortcut: '# Spazio',
-          action: () => this.editor.chain().focus().toggleHeading({ level: 1 }).run()
+          title: 'Basic blocks',
+          commands: [
+            {
+              key: 'paragraph',
+              title: 'Text',
+              description: 'Start writing with plain text',
+              icon: 'mdi-format-pilcrow',
+              color: 'grey darken-1',
+              action: () => this.editor.chain().focus().setParagraph().run()
+            },
+            {
+              key: 'heading1',
+              title: 'Heading 1',
+              description: 'Big section heading',
+              icon: 'mdi-format-header-1',
+              color: 'blue',
+              shortcut: '# ',
+              action: () => this.editor.chain().focus().toggleHeading({ level: 1 }).run()
+            },
+            {
+              key: 'heading2',
+              title: 'Heading 2',
+              description: 'Medium section heading',
+              icon: 'mdi-format-header-2',
+              color: 'blue',
+              shortcut: '## ',
+              action: () => this.editor.chain().focus().toggleHeading({ level: 2 }).run()
+            },
+            {
+              key: 'heading3',
+              title: 'Heading 3',
+              description: 'Small section heading',
+              icon: 'mdi-format-header-3',
+              color: 'blue',
+              shortcut: '### ',
+              action: () => this.editor.chain().focus().toggleHeading({ level: 3 }).run()
+            }
+          ]
         },
         {
-          key: 'heading2',
-          title: 'Titolo 2',
-          description: 'Sottotitolo sezione',
-          icon: 'mdi-format-header-2',
-          color: 'blue',
-          shortcut: '## Spazio',
-          action: () => this.editor.chain().focus().toggleHeading({ level: 2 }).run()
+          title: 'Lists',
+          commands: [
+            {
+              key: 'bullet-list',
+              title: 'Bulleted list',
+              description: 'Create a simple bulleted list',
+              icon: 'mdi-format-list-bulleted',
+              color: 'orange',
+              shortcut: '- ',
+              action: () => this.editor.chain().focus().toggleBulletList().run()
+            },
+            {
+              key: 'ordered-list',
+              title: 'Numbered list',
+              description: 'Create a list with numbering',
+              icon: 'mdi-format-list-numbered',
+              color: 'orange',
+              shortcut: '1. ',
+              action: () => this.editor.chain().focus().toggleOrderedList().run()
+            },
+            {
+              key: 'task-list',
+              title: 'To-do list',
+              description: 'Track tasks with a to-do list',
+              icon: 'mdi-format-list-checkbox',
+              color: 'green',
+              shortcut: '[] ',
+              action: () => this.editor.chain().focus().toggleTaskList().run()
+            }
+          ]
         },
         {
-          key: 'heading3',
-          title: 'Titolo 3',
-          description: 'Sottotitolo piccolo',
-          icon: 'mdi-format-header-3',
-          color: 'blue',
-          shortcut: '### Spazio',
-          action: () => this.editor.chain().focus().toggleHeading({ level: 3 }).run()
+          title: 'Media',
+          commands: [
+            {
+              key: 'image',
+              title: 'Image',
+              description: 'Upload or embed with link',
+              icon: 'mdi-image',
+              color: 'green',
+              action: () => this.insertImage()
+            },
+            {
+              key: 'table',
+              title: 'Table',
+              description: 'Add a simple table',
+              icon: 'mdi-table',
+              color: 'blue',
+              action: () => this.insertTable()
+            },
+            {
+              key: 'divider',
+              title: 'Divider',
+              description: 'Visually divide blocks',
+              icon: 'mdi-minus',
+              color: 'grey',
+              shortcut: '--- ',
+              action: () => this.editor.chain().focus().setHorizontalRule().run()
+            }
+          ]
         },
         {
-          key: 'paragraph',
-          title: 'Paragrafo',
-          description: 'Testo normale',
-          icon: 'mdi-format-pilcrow',
-          color: 'grey',
-          action: () => this.editor.chain().focus().setParagraph().run()
+          title: 'Advanced blocks',
+          commands: [
+            {
+              key: 'blockquote',
+              title: 'Quote',
+              description: 'Capture a quote',
+              icon: 'mdi-format-quote-close',
+              color: 'indigo',
+              shortcut: '> ',
+              action: () => this.editor.chain().focus().toggleBlockquote().run()
+            },
+            {
+              key: 'code-block',
+              title: 'Code',
+              description: 'Capture a code snippet',
+              icon: 'mdi-code-braces',
+              color: 'red darken-1',
+              shortcut: '``` ',
+              action: () => this.editor.chain().focus().toggleCodeBlock().run()
+            }
+          ]
         },
         {
-          key: 'bullet-list',
-          title: 'Lista Puntata',
-          description: 'Lista con punti',
-          icon: 'mdi-format-list-bulleted',
-          color: 'orange',
-          shortcut: '- Spazio',
-          action: () => this.editor.chain().focus().toggleBulletList().run()
-        },
-        {
-          key: 'ordered-list',
-          title: 'Lista Numerata',
-          description: 'Lista numerata',
-          icon: 'mdi-format-list-numbered',
-          color: 'orange',
-          shortcut: '1. Spazio',
-          action: () => this.editor.chain().focus().toggleOrderedList().run()
-        },
-        {
-          key: 'task-list',
-          title: 'Lista Task',
-          description: 'Lista con checkbox',
-          icon: 'mdi-format-list-checkbox',
-          color: 'green',
-          shortcut: '[] Spazio',
-          action: () => this.editor.chain().focus().toggleTaskList().run()
-        },
-        {
-          key: 'blockquote',
-          title: 'Citazione',
-          description: 'Blocco citazione',
-          icon: 'mdi-format-quote-close',
-          color: 'indigo',
-          shortcut: '> Spazio',
-          action: () => this.editor.chain().focus().toggleBlockquote().run()
-        },
-        {
-          key: 'code-block',
-          title: 'Blocco Codice',
-          description: 'Codice con sintassi',
-          icon: 'mdi-code-braces',
-          color: 'red',
-          shortcut: '``` Spazio',
-          action: () => this.editor.chain().focus().toggleCodeBlock().run()
-        }
-      ],
-      
-      mediaCommands: [
-        {
-          key: 'image',
-          title: 'Immagine',
-          description: 'Inserisci immagine',
-          icon: 'mdi-image',
-          color: 'green',
-          action: () => this.insertImage()
-        },
-        {
-          key: 'table',
-          title: 'Tabella',
-          description: 'Inserisci tabella',
-          icon: 'mdi-table',
-          color: 'blue',
-          action: () => this.insertTable()
-        },
-        {
-          key: 'divider',
-          title: 'Divisore',
-          description: 'Linea orizzontale',
-          icon: 'mdi-minus',
-          color: 'grey',
-          shortcut: '--- Invio',
-          action: () => this.editor.chain().focus().setHorizontalRule().run()
-        },
-        {
-          key: 'youtube',
-          title: 'Video YouTube',
-          description: 'Embed video YouTube',
-          icon: 'mdi-youtube',
-          color: 'red',
-          action: () => this.insertYouTube()
-        }
-      ],
-      
-      aiCommands: [
-        {
-          key: 'ai-improve',
-          title: 'Migliora Testo',
-          description: 'AI migliora la scrittura',
-          icon: 'mdi-robot',
-          color: 'purple',
-          action: () => this.aiImproveText()
-        },
-        {
-          key: 'ai-continue',
-          title: 'Continua Scrittura',
-          description: 'AI continua dal cursore',
-          icon: 'mdi-pencil-plus',
-          color: 'purple',
-          action: () => this.aiContinueWriting()
-        },
-        {
-          key: 'ai-summarize',
-          title: 'Riassumi',
-          description: 'AI crea riassunto',
-          icon: 'mdi-format-list-text',
-          color: 'purple',
-          action: () => this.aiSummarize()
-        },
-        {
-          key: 'ai-translate',
-          title: 'Traduci',
-          description: 'AI traduce il testo',
-          icon: 'mdi-translate',
-          color: 'purple',
-          action: () => this.aiTranslate()
+          title: 'AI Actions',
+          commands: [
+            {
+              key: 'ai-improve',
+              title: 'Improve writing',
+              description: 'Improve selected text with AI',
+              icon: 'mdi-robot',
+              color: 'purple',
+              action: () => this.aiImproveText()
+            },
+            {
+              key: 'ai-continue',
+              title: 'Continue writing',
+              description: 'Generate content from context',
+              icon: 'mdi-pencil-plus',
+              color: 'purple',
+              action: () => this.aiContinueWriting()
+            },
+            {
+              key: 'ai-summarize',
+              title: 'Summarize',
+              description: 'Create a summary of content',
+              icon: 'mdi-format-list-text',
+              color: 'purple',
+              action: () => this.aiSummarize()
+            }
+          ]
         }
       ]
     }
@@ -419,7 +447,20 @@ export default {
       return this.$vuetify.breakpoint.smAndDown
     },
     locale: get('page/locale'),
-    path: get('page/path')
+    path: get('page/path'),
+    
+    filteredSlashSections() {
+      if (!this.slashSearchQuery) return this.slashSections
+      
+      const query = this.slashSearchQuery.toLowerCase()
+      return this.slashSections.map(section => ({
+        ...section,
+        commands: section.commands.filter(cmd => 
+          cmd.title.toLowerCase().includes(query) ||
+          cmd.description.toLowerCase().includes(query)
+        )
+      })).filter(section => section.commands.length > 0)
+    }
   },
   
   watch: {
@@ -431,127 +472,20 @@ export default {
   },
   
   methods: {
-    initializeEditor() {
-      this.editor = new Editor({
-        element: this.$refs.editor,
-        extensions: [
-          StarterKit.configure({
-            blockquote: {
-              HTMLAttributes: {
-                class: 'notion-blockquote',
-              },
-            },
-            codeBlock: {
-              HTMLAttributes: {
-                class: 'notion-code-block',
-              },
-            },
-          }),
-          Underline,
-          Image.configure({
-            HTMLAttributes: {
-              class: 'notion-image',
-            },
-          }),
-          Link.configure({
-            openOnClick: false,
-            HTMLAttributes: {
-              class: 'notion-link',
-            },
-          }),
-          Table.configure({
-            resizable: true,
-            HTMLAttributes: {
-              class: 'notion-table',
-            },
-          }),
-          TableRow,
-          TableHeader,
-          TableCell,
-          TextAlign.configure({
-            types: ['heading', 'paragraph'],
-          }),
-          Highlight.configure({
-            multicolor: true,
-            HTMLAttributes: {
-              class: 'notion-highlight',
-            },
-          }),
-          CharacterCount,
-          Placeholder.configure({
-            placeholder: ({ node }) => {
-              if (node.type.name === 'heading') {
-                return `Titolo ${node.attrs.level}`
-              }
-              return 'Premi "/" per i comandi oppure inizia a scrivere...'
-            },
-          }),
-          Typography,
-          TaskList.configure({
-            HTMLAttributes: {
-              class: 'notion-task-list',
-            },
-          }),
-          TaskItem.configure({
-            HTMLAttributes: {
-              class: 'notion-task-item',
-            },
-          }),
-          HorizontalRule.configure({
-            HTMLAttributes: {
-              class: 'notion-divider',
-            },
-          }),
-          YouTube.configure({
-            HTMLAttributes: {
-              class: 'notion-youtube',
-            },
-          }),
-        ],
-        content: this.$store.get('editor/content') || '',
-        editorProps: {
-          attributes: {
-            class: 'notion-editor-content',
-          },
-          handleKeyDown: (view, event) => {
-            // Gestisci slash commands
-            if (event.key === '/' && this.shouldShowSlashMenu()) {
-              setTimeout(() => this.showSlashMenu(), 100)
-              return false
-            }
-            // Chiudi slash menu su Escape
-            if (event.key === 'Escape' && this.slashMenuOpen) {
-              this.slashMenuOpen = false
-              return true
-            }
-            return false
-          }
-        },
-        onUpdate: ({ editor }) => {
-          this.updateContent(editor)
-          this.updateStats(editor)
-        },
-        onSelectionUpdate: ({ editor }) => {
-          this.updateStats(editor)
-        },
-        onCreate: ({ editor }) => {
-          this.updateStats(editor)
+    updateContent() {
+      if (this.editor) {
+        const html = this.editor.getHTML()
+        if (this.$store.set) {
+          this.$store.set('editor/content', html)
+        } else if (this.$store.commit) {
+          this.$store.commit('editor/SET_CONTENT', html)
         }
-      })
-    },
-    
-    updateContent(editor) {
-      const html = editor.getHTML()
-      if (this.$store.set) {
-        this.$store.set('editor/content', html)
-      } else if (this.$store.commit) {
-        this.$store.commit('editor/SET_CONTENT', html)
       }
     },
     
-    updateStats(editor) {
-      if (this.showCharacterCount) {
-        const characterCount = editor.storage.characterCount
+    updateStats() {
+      if (this.editor && this.showCharacterCount) {
+        const characterCount = this.editor.storage.characterCount
         if (characterCount) {
           this.stats = {
             characters: characterCount.characters(),
@@ -561,24 +495,37 @@ export default {
       }
     },
     
+    updatePageTitle(event) {
+      this.pageTitle = event.target.textContent
+    },
+    
     // Slash Menu
     shouldShowSlashMenu() {
+      if (!this.editor) return false
       const { selection } = this.editor.state
       const { from } = selection
       const text = this.editor.state.doc.textBetween(from - 1, from)
-      return text === '/' || from === 0
+      return text === '/'
     },
     
     showSlashMenu() {
+      if (!this.editor) return
       const { selection } = this.editor.state
       const { from } = selection
       
       const start = this.editor.view.coordsAtPos(from)
       this.slashMenuPosition = {
         x: start.left,
-        y: start.bottom + 10
+        y: start.bottom + 8
       }
       this.slashMenuOpen = true
+      this.slashSearchQuery = ''
+      
+      // Focus search input
+      this.$nextTick(() => {
+        const searchInput = document.querySelector('.slash-search-input')
+        if (searchInput) searchInput.focus()
+      })
     },
     
     toggleSlashMenu() {
@@ -589,17 +536,23 @@ export default {
       }
     },
     
+    filterSlashCommands() {
+      // Il filtro viene gestito automaticamente dalla computed property
+    },
+    
     executeCommand(command) {
       this.slashMenuOpen = false
       // Rimuovi il carattere "/" se presente
-      const { selection } = this.editor.state
-      const { from } = selection
-      const text = this.editor.state.doc.textBetween(from - 1, from)
-      if (text === '/') {
-        this.editor.chain().focus().deleteRange({ from: from - 1, to: from }).run()
+      if (this.editor) {
+        const { selection } = this.editor.state
+        const { from } = selection
+        const text = this.editor.state.doc.textBetween(from - 1, from)
+        if (text === '/') {
+          this.editor.chain().focus().deleteRange({ from: from - 1, to: from }).run()
+        }
+        
+        command.action()
       }
-      
-      command.action()
     },
     
     // Media insertion
@@ -630,15 +583,10 @@ export default {
       }
     },
     
-    insertYouTube() {
-      const url = prompt('Inserisci URL YouTube:')
-      if (url && this.editor) {
-        this.editor.chain().focus().setYouTubeVideo({ src: url }).run()
-      }
-    },
-    
     // Link management
     setLinkFromSelection() {
+      if (!this.editor) return
+      
       const { from, to } = this.editor.state.selection
       const text = this.editor.state.doc.textBetween(from, to)
       
@@ -670,7 +618,7 @@ export default {
       if (!selectedText) {
         this.$store.commit('showNotification', {
           style: 'warning',
-          message: 'Seleziona del testo da migliorare con AI',
+          message: 'Select text to improve with AI',
           icon: 'robot'
         })
         return
@@ -678,164 +626,150 @@ export default {
       
       this.aiLoading = true
       
-      try {
-        // Qui chiamerai l'API AI - per ora simuliamo
-        const improvedText = await this.callAI('improve', selectedText)
-        this.editor.chain().focus().deleteRange({ from, to }).insertContent(improvedText).run()
-        
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: 'Testo migliorato con AI!',
-          icon: 'robot'
-        })
-      } catch (error) {
-        this.$store.commit('showNotification', {
-          style: 'error',
-          message: 'Errore AI: ' + error.message,
-          icon: 'robot'
-        })
-      } finally {
+      // Simulazione chiamata AI
+      setTimeout(() => {
         this.aiLoading = false
-      }
+        this.$store.commit('showNotification', {
+          style: 'info',
+          message: 'AI text improvement: Feature in development!',
+          icon: 'robot'
+        })
+      }, 2000)
     },
     
     async aiContinueWriting() {
-      if (!this.editor) return
-      
       this.aiLoading = true
       
-      try {
-        const { from } = this.editor.state.selection
-        const currentText = this.editor.state.doc.textBetween(Math.max(0, from - 200), from)
-        
-        const continuation = await this.callAI('continue', currentText)
-        this.editor.chain().focus().insertContent(' ' + continuation).run()
-        
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: 'AI ha continuato la scrittura!',
-          icon: 'robot'
-        })
-      } catch (error) {
-        this.$store.commit('showNotification', {
-          style: 'error',
-          message: 'Errore AI: ' + error.message,
-          icon: 'robot'
-        })
-      } finally {
+      setTimeout(() => {
         this.aiLoading = false
-      }
+        this.$store.commit('showNotification', {
+          style: 'info',
+          message: 'AI continue writing: Coming soon!',
+          icon: 'robot'
+        })
+      }, 2000)
     },
     
     async aiSummarize() {
-      if (!this.editor) return
-      
-      const content = this.editor.getText()
-      if (!content || content.length < 100) {
-        this.$store.commit('showNotification', {
-          style: 'warning',
-          message: 'Testo troppo corto per creare un riassunto',
-          icon: 'robot'
-        })
-        return
-      }
-      
       this.aiLoading = true
       
-      try {
-        const summary = await this.callAI('summarize', content)
-        this.editor.chain().focus().insertContent('\n\n**Riassunto AI:**\n' + summary).run()
-        
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: 'Riassunto AI creato!',
-          icon: 'robot'
-        })
-      } catch (error) {
-        this.$store.commit('showNotification', {
-          style: 'error',
-          message: 'Errore AI: ' + error.message,
-          icon: 'robot'
-        })
-      } finally {
+      setTimeout(() => {
         this.aiLoading = false
-      }
-    },
-    
-    async aiTranslate() {
-      const { from, to } = this.editor.state.selection
-      const selectedText = this.editor.state.doc.textBetween(from, to)
-      
-      if (!selectedText) {
         this.$store.commit('showNotification', {
-          style: 'warning',
-          message: 'Seleziona del testo da tradurre',
+          style: 'info',
+          message: 'AI summarize: Feature in development!',
           icon: 'robot'
         })
-        return
-      }
-      
-      const targetLang = prompt('Traduci in (inglese, francese, spagnolo, etc.):')
-      if (!targetLang) return
-      
-      this.aiLoading = true
-      
-      try {
-        const translation = await this.callAI('translate', selectedText, { targetLanguage: targetLang })
-        this.editor.chain().focus().deleteRange({ from, to }).insertContent(translation).run()
-        
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: `Testo tradotto in ${targetLang}!`,
-          icon: 'robot'
-        })
-      } catch (error) {
-        this.$store.commit('showNotification', {
-          style: 'error',
-          message: 'Errore AI: ' + error.message,
-          icon: 'robot'
-        })
-      } finally {
-        this.aiLoading = false
-      }
-    },
-    
-    // AI API Call - integra con server/modules/editor/tiptap/ai-integration.js
-    async callAI(action, text, context = {}) {
-      try {
-        const response = await fetch('/api/editor/tiptap/ai', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.$store.get('user/token')}`
-          },
-          body: JSON.stringify({
-            action,
-            text,
-            context
-          })
-        })
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-        
-        const data = await response.json()
-        return data.result
-      } catch (error) {
-        console.error('AI API Error:', error)
-        throw error
-      }
+      }, 2000)
     }
   },
   
-  async mounted() {
+  mounted() {
     if (this.$store.set) {
       this.$store.set('editor/editorKey', 'tiptap')
     }
     
-    await this.$nextTick()
-    this.initializeEditor()
+    this.editor = new Editor({
+      content: this.$store.get('editor/content') || '',
+      extensions: [
+        StarterKit.configure({
+          blockquote: {
+            HTMLAttributes: {
+              class: 'notion-blockquote',
+            },
+          },
+          codeBlock: {
+            HTMLAttributes: {
+              class: 'notion-code-block',
+            },
+          },
+        }),
+        Underline,
+        Image.configure({
+          HTMLAttributes: {
+            class: 'notion-image',
+          },
+        }),
+        Link.configure({
+          openOnClick: false,
+          HTMLAttributes: {
+            class: 'notion-link',
+          },
+        }),
+        Table.configure({
+          resizable: true,
+          HTMLAttributes: {
+            class: 'notion-table',
+          },
+        }),
+        TableRow,
+        TableHeader,
+        TableCell,
+        TextAlign.configure({
+          types: ['heading', 'paragraph'],
+        }),
+        Highlight.configure({
+          multicolor: true,
+          HTMLAttributes: {
+            class: 'notion-highlight',
+          },
+        }),
+        CharacterCount,
+        Placeholder.configure({
+          placeholder: ({ node }) => {
+            if (node.type.name === 'heading') {
+              return `Heading ${node.attrs.level}`
+            }
+            return 'Type \'/\' for commands, or just start writing...'
+          },
+        }),
+        Typography,
+        TaskList.configure({
+          HTMLAttributes: {
+            class: 'notion-task-list',
+          },
+        }),
+        TaskItem.configure({
+          HTMLAttributes: {
+            class: 'notion-task-item',
+          },
+        }),
+        HorizontalRule.configure({
+          HTMLAttributes: {
+            class: 'notion-divider',
+          },
+        }),
+      ],
+      editorProps: {
+        attributes: {
+          class: 'notion-editor-content',
+        },
+        handleKeyDown: (view, event) => {
+          // Gestisci slash commands
+          if (event.key === '/' && this.shouldShowSlashMenu()) {
+            setTimeout(() => this.showSlashMenu(), 100)
+            return false
+          }
+          // Chiudi slash menu su Escape
+          if (event.key === 'Escape' && this.slashMenuOpen) {
+            this.slashMenuOpen = false
+            return true
+          }
+          return false
+        }
+      },
+      onUpdate: () => {
+        this.updateContent()
+        this.updateStats()
+      },
+      onSelectionUpdate: () => {
+        this.updateStats()
+      },
+      onCreate: () => {
+        this.updateStats()
+        console.log('TipTap Notion-like Editor initialized successfully')
+      }
+    })
     
     // Event listeners
     this.$root.$on('editorInsert', opts => {
@@ -860,57 +794,107 @@ export default {
 </script>
 
 <style lang="scss">
+// Variabili Notion-like
+$notion-text: #37352f;
+$notion-text-light: #787774;
+$notion-bg: #ffffff;
+$notion-bg-hover: #f7f6f3;
+$notion-border: #e9e9e7;
+$notion-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+$notion-radius: 6px;
+$notion-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
+
+// Reset e base
 .editor-tiptap-notion {
   position: relative;
-  height: calc(100vh - 64px - 24px);
-  background: #fafafa;
+  height: 100vh;
+  background: $notion-bg;
+  font-family: $notion-font;
+  overflow: hidden;
 
   @at-root .theme--dark & {
-    background: #1e1e1e;
+    background: #1f1f1f;
+    --notion-text: #e6e6e6;
+    --notion-text-light: #9b9b9b;
+    --notion-bg: #1f1f1f;
+    --notion-bg-hover: #2a2a2a;
+    --notion-border: #333333;
   }
 
-  // Bubble Menu Styles
+  // Bubble Menu stile Notion
   .bubble-menu {
     z-index: 1000;
     
     .bubble-menu-content {
       background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      border: 1px solid #e0e0e0;
+      border: 1px solid $notion-border;
+      border-radius: $notion-radius;
+      box-shadow: $notion-shadow, 0 8px 24px rgba(0, 0, 0, 0.12);
       display: flex;
-      padding: 4px;
-      gap: 2px;
+      align-items: center;
+      padding: 2px;
+      gap: 1px;
 
       @at-root .theme--dark & {
         background: #2d2d2d;
         border-color: #404040;
       }
 
-      .bubble-btn {
+      .bubble-menu-group {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+      }
+
+      .bubble-menu-divider {
+        width: 1px;
+        height: 20px;
+        background: $notion-border;
+        margin: 0 4px;
+
+        @at-root .theme--dark & {
+          background: #404040;
+        }
+      }
+
+      .bubble-menu-button {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-        border: none;
-        background: transparent;
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: all 0.15s ease;
+        color: $notion-text-light;
+        position: relative;
 
         &:hover {
-          background: #f5f5f5;
+          background: $notion-bg-hover;
+          color: $notion-text;
+
           @at-root .theme--dark & {
-            background: #404040;
+            background: var(--notion-bg-hover);
+            color: var(--notion-text);
           }
         }
 
         &.active {
-          background: #e3f2fd;
-          color: #1976d2;
-          @at-root .theme--dark & {
-            background: #1976d2;
+          background: #2383e2;
+          color: white;
+        }
+
+        &.ai-button {
+          .ai-sparkle {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            font-size: 8px;
+            line-height: 1;
+          }
+
+          &:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
           }
         }
@@ -918,73 +902,182 @@ export default {
     }
   }
 
-  // Floating Menu Styles
+  // Floating Menu stile Notion
   .floating-menu {
     z-index: 999;
     
     .floating-menu-content {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      border: 1px solid #e0e0e0;
       display: flex;
-      padding: 4px;
+      align-items: center;
       gap: 4px;
 
-      @at-root .theme--dark & {
-        background: #2d2d2d;
-        border-color: #404040;
-      }
-
-      .floating-btn {
-        border-radius: 6px;
-        transition: all 0.2s;
+      .floating-menu-handle {
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        cursor: grab;
 
         &:hover {
-          background: #f5f5f5;
+          opacity: 1;
+        }
+
+        .floating-menu-dots {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          grid-template-rows: repeat(3, 1fr);
+          gap: 1px;
+          width: 8px;
+          height: 12px;
+
+          .dot {
+            width: 2px;
+            height: 2px;
+            background: #d1d5db;
+            border-radius: 50%;
+
+            @at-root .theme--dark & {
+              background: #6b7280;
+            }
+          }
+        }
+      }
+
+      .floating-menu-actions {
+        display: flex;
+        gap: 2px;
+      }
+
+      .floating-action-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        background: white;
+        border: 1px solid $notion-border;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: $notion-shadow;
+
+        @at-root .theme--dark & {
+          background: #2d2d2d;
+          border-color: #404040;
+        }
+
+        &:hover {
+          background: $notion-bg-hover;
+          transform: scale(1.05);
+
           @at-root .theme--dark & {
-            background: #404040;
+            background: var(--notion-bg-hover);
+          }
+        }
+
+        &.ai-button {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-color: transparent;
+          color: white;
+
+          &:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
           }
         }
       }
     }
   }
 
-  // Editor Content Wrapper
-  .editor-content-wrapper {
-    height: calc(100% - 24px);
+  // Container principale
+  .editor-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .editor-content-area {
+    flex: 1;
     overflow-y: auto;
     position: relative;
   }
 
-  // Main Editor Content
-  .editor-content {
-    height: 100%;
-    
+  // Header della pagina (opzionale)
+  .page-header {
+    padding: 96px 96px 0;
+
+    @media (max-width: 1024px) {
+      padding: 60px 60px 0;
+    }
+
+    @media (max-width: 768px) {
+      padding: 40px 24px 0;
+    }
+
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: $notion-text;
+      border: none;
+      outline: none;
+      margin-bottom: 2rem;
+      min-height: 1em;
+
+      @at-root .theme--dark & {
+        color: var(--notion-text);
+      }
+
+      &:empty::before {
+        content: attr(placeholder);
+        color: $notion-text-light;
+        @at-root .theme--dark & {
+          color: var(--notion-text-light);
+        }
+      }
+
+      &:focus {
+        outline: none;
+      }
+    }
+  }
+
+  // Wrapper editor
+  .editor-wrapper {
+    position: relative;
+  }
+
+  // Contenuto editor principale
+  .notion-editor {
     .notion-editor-content {
       max-width: 100%;
       margin: 0 auto;
-      padding: 40px 96px;
-      min-height: calc(100vh - 200px);
+      padding: 96px 96px 200px;
+      min-height: calc(100vh - 96px);
       outline: none;
+      font-size: 16px;
+      line-height: 1.5;
+      color: $notion-text;
+
+      @at-root .theme--dark & {
+        color: var(--notion-text);
+      }
 
       @media (max-width: 1024px) {
-        padding: 30px 60px;
+        padding: 60px 60px 200px;
       }
 
       @media (max-width: 768px) {
-        padding: 20px 24px;
+        padding: 40px 24px 200px;
       }
 
-      // Typography Notion-like
+      // Tipografia stile Notion
       h1, h2, h3, h4, h5, h6 {
-        line-height: 1.2;
+        font-family: $notion-font;
         font-weight: 600;
+        line-height: 1.2;
         margin: 2em 0 0.5em 0;
-        color: #111827;
+        color: $notion-text;
 
         @at-root .theme--dark & {
-          color: #f9fafb;
+          color: var(--notion-text);
         }
 
         &:first-child {
@@ -993,93 +1086,63 @@ export default {
       }
 
       h1 {
-        font-size: 2.5rem;
-        letter-spacing: -0.02em;
+        font-size: 1.875rem;
+        font-weight: 600;
       }
 
       h2 {
-        font-size: 2rem;
-        letter-spacing: -0.01em;
+        font-size: 1.5rem;
+        font-weight: 600;
       }
 
       h3 {
-        font-size: 1.5rem;
-      }
-
-      h4 {
         font-size: 1.25rem;
+        font-weight: 600;
       }
 
-      h5, h6 {
+      h4, h5, h6 {
         font-size: 1rem;
+        font-weight: 600;
       }
 
       p {
-        margin: 1em 0;
-        line-height: 1.6;
-        color: #374151;
-        font-size: 16px;
+        margin: 1px 0;
+        line-height: 1.5;
+        color: $notion-text;
 
         @at-root .theme--dark & {
-          color: #d1d5db;
+          color: var(--notion-text);
         }
 
-        &:first-child {
-          margin-top: 0;
-        }
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-
-        // Placeholder
         &.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           float: left;
-          color: #9ca3af;
+          color: $notion-text-light;
           pointer-events: none;
           height: 0;
-          font-style: italic;
 
           @at-root .theme--dark & {
-            color: #6b7280;
+            color: var(--notion-text-light);
           }
         }
       }
 
-      // Lists Notion-style
+      // Liste stile Notion
       ul, ol {
-        margin: 1em 0;
+        margin: 1px 0;
         padding-left: 1.5em;
 
         li {
-          margin: 0.25em 0;
-          line-height: 1.6;
+          margin: 1px 0;
+          line-height: 1.5;
 
           p {
             margin: 0;
           }
-
-          // Nested lists
-          ul, ol {
-            margin: 0.25em 0;
-          }
         }
       }
 
-      ul {
-        list-style-type: disc;
-
-        ul {
-          list-style-type: circle;
-          
-          ul {
-            list-style-type: square;
-          }
-        }
-      }
-
-      // Task Lists Notion-style
+      // Task Lists
       ul.notion-task-list {
         list-style: none;
         padding-left: 0;
@@ -1087,17 +1150,22 @@ export default {
         li.notion-task-item {
           display: flex;
           align-items: flex-start;
-          margin: 0.5em 0;
+          margin: 1px 0;
 
           > label {
-            margin-right: 0.5em;
-            margin-top: 0.1em;
+            display: flex;
+            align-items: center;
+            margin-right: 8px;
+            margin-top: 1px;
             user-select: none;
             cursor: pointer;
 
             input[type="checkbox"] {
+              width: 16px;
+              height: 16px;
               margin: 0;
               cursor: pointer;
+              border-radius: 3px;
             }
           }
 
@@ -1107,40 +1175,33 @@ export default {
         }
       }
 
-      // Blockquotes Notion-style
+      // Blockquotes
       blockquote.notion-blockquote {
-        margin: 1.5em 0;
-        padding: 0 0 0 1em;
-        border-left: 3px solid #e5e7eb;
-        color: #6b7280;
-        font-style: italic;
-        position: relative;
+        margin: 4px 0;
+        padding: 3px 14px;
+        border-left: 3px solid currentColor;
+        color: $notion-text;
 
         @at-root .theme--dark & {
-          border-left-color: #4b5563;
-          color: #9ca3af;
-        }
-
-        p {
-          color: inherit;
+          color: var(--notion-text);
         }
       }
 
-      // Code Blocks Notion-style
+      // Code blocks
       pre.notion-code-block {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 1em;
-        margin: 1.5em 0;
+        background: #f7f6f3;
+        border: 1px solid $notion-border;
+        border-radius: $notion-radius;
+        padding: 16px;
+        margin: 4px 0;
         overflow-x: auto;
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
         font-size: 14px;
         line-height: 1.4;
 
         @at-root .theme--dark & {
-          background: #1f2937;
-          border-color: #374151;
+          background: #2d2d2d;
+          border-color: #404040;
         }
 
         code {
@@ -1151,53 +1212,52 @@ export default {
         }
       }
 
-      // Inline Code
+      // Inline code
       code {
-        background: #f1f5f9;
-        color: #e11d48;
+        background: rgba(135, 131, 120, 0.15);
+        color: #eb5757;
         padding: 0.2em 0.4em;
-        border-radius: 4px;
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        font-size: 0.875em;
+        border-radius: 3px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        font-size: 85%;
 
         @at-root .theme--dark & {
-          background: #374151;
-          color: #fca5a5;
+          background: rgba(255, 255, 255, 0.1);
+          color: #ff6b6b;
         }
       }
 
-      // Tables Notion-style
+      // Tabelle stile Notion
       table.notion-table {
         width: 100%;
-        margin: 1.5em 0;
+        margin: 8px 0;
         border-collapse: collapse;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
+        border: 1px solid $notion-border;
+        border-radius: $notion-radius;
         overflow: hidden;
 
         @at-root .theme--dark & {
-          border-color: #374151;
+          border-color: #404040;
         }
 
         th, td {
-          border: 1px solid #e5e7eb;
-          padding: 12px 16px;
+          border: 1px solid $notion-border;
+          padding: 8px 9px;
           text-align: left;
           vertical-align: top;
+          min-width: 100px;
 
           @at-root .theme--dark & {
-            border-color: #374151;
+            border-color: #404040;
           }
         }
 
         th {
-          background: #f9fafb;
-          font-weight: 600;
-          color: #111827;
+          background: #f7f6f3;
+          font-weight: 500;
 
           @at-root .theme--dark & {
-            background: #374151;
-            color: #f9fafb;
+            background: #2d2d2d;
           }
         }
 
@@ -1205,180 +1265,605 @@ export default {
           background: white;
 
           @at-root .theme--dark & {
-            background: #1f2937;
+            background: #1f1f1f;
           }
-        }
-
-        // Table selection
-        .selectedCell:after {
-          z-index: 2;
-          position: absolute;
-          content: "";
-          left: 0; right: 0; top: 0; bottom: 0;
-          background: rgba(59, 130, 246, 0.1);
-          pointer-events: none;
         }
       }
 
-      // Images Notion-style
+      // Immagini
       img.notion-image {
         max-width: 100%;
         height: auto;
-        border-radius: 8px;
-        margin: 1em 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        cursor: pointer;
-        transition: transform 0.2s;
-
-        &:hover {
-          transform: scale(1.02);
-        }
+        border-radius: $notion-radius;
+        margin: 4px 0;
       }
 
-      // Links Notion-style
+      // Link
       a.notion-link {
-        color: #3b82f6;
-        text-decoration: none;
-        border-bottom: 1px solid transparent;
-        transition: border-color 0.2s;
-
-        @at-root .theme--dark & {
-          color: #60a5fa;
-        }
+        color: #2383e2;
+        text-decoration: underline;
+        text-decoration-color: rgba(35, 131, 226, 0.4);
+        text-underline-offset: 2px;
 
         &:hover {
-          border-bottom-color: currentColor;
+          text-decoration-color: currentColor;
         }
-      }
-
-      // Highlights Notion-style
-      mark.notion-highlight {
-        background: linear-gradient(180deg, transparent 60%, #fef08a 60%);
-        padding: 0.1em 0;
-        border-radius: 2px;
 
         @at-root .theme--dark & {
-          background: linear-gradient(180deg, transparent 60%, #ca8a04 60%);
+          color: #58a6ff;
         }
       }
 
-      // Horizontal Rule Notion-style
+      // Highlight
+      mark.notion-highlight {
+        background: linear-gradient(180deg, transparent 50%, #ffeb3b 50%);
+        padding: 0.1em 0;
+
+        @at-root .theme--dark & {
+          background: linear-gradient(180deg, transparent 50%, #ffa726 50%);
+        }
+      }
+
+      // Separatori
       hr.notion-divider {
         border: none;
         height: 1px;
-        background: #e5e7eb;
-        margin: 2em 0;
+        background: $notion-border;
+        margin: 16px 0;
 
         @at-root .theme--dark & {
-          background: #374151;
+          background: #404040;
         }
       }
 
-      // YouTube Embeds
-      .notion-youtube {
-        margin: 1.5em 0;
-        
-        iframe {
-          width: 100%;
-          max-width: 100%;
-          border-radius: 8px;
-        }
-      }
-
-      // Focus styles
+      // Focus
       &:focus {
         outline: none;
       }
-
-      // Selection
-      ::selection {
-        background: #dbeafe;
-        @at-root .theme--dark & {
-          background: #1e40af;
-        }
-      }
     }
   }
 
-  // Slash Menu Styles
-  .slash-menu {
-    .v-menu__content {
-      max-height: 400px;
-      overflow-y: auto;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      border-radius: 12px;
+  // Slash Menu con design Notion
+  .slash-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 998;
+  }
 
-      .v-card {
-        border-radius: 12px;
+  .slash-menu {
+    position: fixed;
+    z-index: 999;
+    width: 320px;
+    max-height: 400px;
+    background: white;
+    border: 1px solid $notion-border;
+    border-radius: $notion-radius;
+    box-shadow: $notion-shadow, 0 8px 24px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+
+    @at-root .theme--dark & {
+      background: #2d2d2d;
+      border-color: #404040;
+    }
+
+    .slash-menu-content {
+      display: flex;
+      flex-direction: column;
+      max-height: 400px;
+    }
+
+    .slash-menu-search {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid $notion-border;
+      gap: 8px;
+
+      @at-root .theme--dark & {
+        border-bottom-color: #404040;
       }
 
-      .v-list {
-        padding: 8px;
+      .slash-search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        background: transparent;
+        color: $notion-text;
 
-        .v-subheader {
-          font-weight: 600;
-          color: #6b7280;
-          font-size: 12px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+        @at-root .theme--dark & {
+          color: var(--notion-text);
+        }
+
+        &::placeholder {
+          color: $notion-text-light;
 
           @at-root .theme--dark & {
-            color: #9ca3af;
+            color: var(--notion-text-light);
+          }
+        }
+      }
+    }
+
+    .slash-menu-sections {
+      overflow-y: auto;
+      max-height: 300px;
+    }
+
+    .slash-section {
+      .slash-section-title {
+        padding: 8px 12px 4px;
+        font-size: 11px;
+        font-weight: 500;
+        color: $notion-text-light;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+
+        @at-root .theme--dark & {
+          color: var(--notion-text-light);
+        }
+      }
+    }
+
+    .slash-command {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      gap: 10px;
+
+      &:hover {
+        background: $notion-bg-hover;
+
+        @at-root .theme--dark & {
+          background: var(--notion-bg-hover);
+        }
+      }
+
+      .command-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+      }
+
+      .command-content {
+        flex: 1;
+        min-width: 0;
+
+        .command-title {
+          font-size: 14px;
+          font-weight: 400;
+          color: $notion-text;
+          line-height: 1.3;
+
+          @at-root .theme--dark & {
+            color: var(--notion-text);
           }
         }
 
-        .v-list-item {
-          border-radius: 8px;
-          margin: 2px 0;
-          transition: background-color 0.2s;
+        .command-description {
+          font-size: 12px;
+          color: $notion-text-light;
+          line-height: 1.2;
+
+          @at-root .theme--dark & {
+            color: var(--notion-text-light);
+          }
+        }
+      }
+
+      .command-shortcut {
+        font-size: 11px;
+        color: $notion-text-light;
+        background: rgba(135, 131, 120, 0.1);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'SFMono-Regular', Consolas, monospace;
+
+        @at-root .theme--dark & {
+          color: var(--notion-text-light);
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+  }
+
+  // Dialog stile Notion
+  .notion-dialog {
+    .v-dialog {
+      box-shadow: none !important;
+    }
+  }
+
+  .link-dialog,
+  .image-dialog {
+    background: white;
+    border-radius: $notion-radius;
+    box-shadow: $notion-shadow, 0 16px 32px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+
+    @at-root .theme--dark & {
+      background: #2d2d2d;
+    }
+
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid $notion-border;
+
+      @at-root .theme--dark & {
+        border-bottom-color: #404040;
+      }
+
+      .dialog-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: $notion-text;
+
+        @at-root .theme--dark & {
+          color: var(--notion-text);
+        }
+      }
+
+      .dialog-close {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: $notion-text-light;
+
+        &:hover {
+          background: $notion-bg-hover;
+          color: $notion-text;
+
+          @at-root .theme--dark & {
+            background: var(--notion-bg-hover);
+            color: var(--notion-text);
+          }
+        }
+      }
+    }
+
+    .dialog-content {
+      padding: 20px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .input-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: $notion-text;
+        margin-bottom: 6px;
+
+        @at-root .theme--dark & {
+          color: var(--notion-text);
+        }
+      }
+
+      .input-field {
+        display: flex;
+        align-items: center;
+        background: $notion-bg;
+        border: 1px solid $notion-border;
+        border-radius: $notion-radius;
+        padding: 8px 12px;
+        gap: 8px;
+
+        @at-root .theme--dark & {
+          background: #1f1f1f;
+          border-color: #404040;
+        }
+
+        &:focus-within {
+          border-color: #2383e2;
+          box-shadow: 0 0 0 1px #2383e2;
+        }
+
+        .link-input,
+        .image-input {
+          flex: 1;
+          border: none;
+          outline: none;
+          font-size: 14px;
+          background: transparent;
+          color: $notion-text;
+
+          @at-root .theme--dark & {
+            color: var(--notion-text);
+          }
+
+          &::placeholder {
+            color: $notion-text-light;
+
+            @at-root .theme--dark & {
+              color: var(--notion-text-light);
+            }
+          }
+        }
+      }
+    }
+
+    .upload-area {
+      margin-bottom: 16px;
+
+      .upload-zone {
+        border: 2px dashed $notion-border;
+        border-radius: $notion-radius;
+        padding: 32px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        @at-root .theme--dark & {
+          border-color: #404040;
+        }
+
+        &:hover {
+          border-color: #2383e2;
+          background: rgba(35, 131, 226, 0.05);
+        }
+
+        .upload-text {
+          font-size: 14px;
+          color: $notion-text-light;
+          margin-top: 8px;
+
+          @at-root .theme--dark & {
+            color: var(--notion-text-light);
+          }
+
+          .upload-link {
+            color: #2383e2;
+            cursor: pointer;
+
+            &:hover {
+              text-decoration: underline;
+            }
+          }
+        }
+      }
+    }
+
+    .input-divider {
+      display: flex;
+      align-items: center;
+      margin: 16px 0;
+      gap: 12px;
+
+      .divider-line {
+        flex: 1;
+        height: 1px;
+        background: $notion-border;
+
+        @at-root .theme--dark & {
+          background: #404040;
+        }
+      }
+
+      .divider-text {
+        font-size: 12px;
+        color: $notion-text-light;
+
+        @at-root .theme--dark & {
+          color: var(--notion-text-light);
+        }
+      }
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 16px 20px;
+      border-top: 1px solid $notion-border;
+
+      @at-root .theme--dark & {
+        border-top-color: #404040;
+      }
+
+      .dialog-button {
+        padding: 8px 16px;
+        border-radius: $notion-radius;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: none;
+        outline: none;
+
+        &.secondary {
+          background: transparent;
+          color: $notion-text-light;
 
           &:hover {
-            background: #f3f4f6;
+            background: $notion-bg-hover;
+            color: $notion-text;
+
             @at-root .theme--dark & {
-              background: #374151;
+              background: var(--notion-bg-hover);
+              color: var(--notion-text);
             }
           }
+        }
 
-          .v-list-item-avatar {
-            min-width: 36px;
-            margin: 8px 12px 8px 0;
+        &.primary {
+          background: #2383e2;
+          color: white;
 
-            .v-icon {
-              font-size: 20px;
-            }
-          }
-
-          .v-list-item-title {
-            font-weight: 500;
-            font-size: 14px;
-          }
-
-          .v-list-item-subtitle {
-            font-size: 12px;
-            color: #6b7280;
-            
-            @at-root .theme--dark & {
-              color: #9ca3af;
-            }
+          &:hover {
+            background: #1a73d1;
           }
         }
       }
     }
   }
 
-  // Status Bar
+  // AI Loading overlay
+  .ai-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(2px);
+
+    .ai-loading-content {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: $notion-shadow, 0 20px 40px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 280px;
+
+      @at-root .theme--dark & {
+        background: #2d2d2d;
+      }
+
+      .ai-spinner {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 16px;
+
+        .spinner-ring {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          border: 2px solid transparent;
+          border-top-color: #2383e2;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+
+          &:nth-child(2) {
+            animation-delay: -0.33s;
+            border-top-color: #9333ea;
+          }
+
+          &:nth-child(3) {
+            animation-delay: -0.66s;
+            border-top-color: #06b6d4;
+          }
+        }
+      }
+
+      .ai-loading-text {
+        .ai-text-line {
+          font-size: 16px;
+          font-weight: 500;
+          color: $notion-text;
+          margin-bottom: 4px;
+
+          @at-root .theme--dark & {
+            color: var(--notion-text);
+          }
+        }
+
+        .ai-text-subline {
+          font-size: 14px;
+          color: $notion-text-light;
+
+          @at-root .theme--dark & {
+            color: var(--notion-text-light);
+          }
+        }
+      }
+    }
+  }
+
+  // Status bar minimale
   .editor-status-bar {
-    .editor-locale {
-      font-weight: 600;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    background: white;
+    border-top: 1px solid $notion-border;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    font-size: 12px;
+    color: $notion-text-light;
+    z-index: 100;
+
+    @at-root .theme--dark & {
+      background: #1f1f1f;
+      border-top-color: #404040;
+      color: var(--notion-text-light);
     }
 
-    .caption {
-      font-size: 11px;
+    .status-left,
+    .status-center,
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-divider {
+      width: 1px;
+      height: 12px;
+      background: $notion-border;
+
+      @at-root .theme--dark & {
+        background: #404040;
+      }
+    }
+
+    .status-item {
+      &.locale {
+        font-weight: 500;
+      }
+
+      &.editor-name {
+        font-weight: 500;
+        color: $notion-text;
+
+        @at-root .theme--dark & {
+          color: var(--notion-text);
+        }
+      }
+
+      &.ai-indicator {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #9333ea;
+      }
     }
   }
 }
 
-// Responsive adjustments
+// Animazioni
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive
 @media (max-width: 768px) {
   .editor-tiptap-notion {
     .bubble-menu,
@@ -1386,38 +1871,46 @@ export default {
       display: none !important;
     }
 
-    .editor-content .notion-editor-content {
-      h1 { font-size: 2rem; }
-      h2 { font-size: 1.75rem; }
-      h3 { font-size: 1.5rem; }
+    .slash-menu {
+      width: calc(100vw - 32px);
+      left: 16px !important;
+      right: 16px;
+    }
+
+    .editor-status-bar {
+      .status-center {
+        display: none;
+      }
     }
   }
 }
 
-// Dark theme adjustments
-.theme--dark {
-  .editor-tiptap-notion {
-    .v-dialog > .v-card {
-      background: #2d2d2d;
-    }
+// Scrollbar personalizzata
+.editor-tiptap-notion ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
 
-    .v-menu__content {
-      background: #2d2d2d;
-    }
+.editor-tiptap-notion ::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-    .v-overlay__scrim {
-      background: rgba(0, 0, 0, 0.8);
-    }
+.editor-tiptap-notion ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.3);
   }
 }
 
-// Animation for AI loading
-@keyframes ai-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
+@at-root .theme--dark {
+  .editor-tiptap-notion ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
 
-.ai-loading {
-  animation: ai-pulse 1.5s ease-in-out infinite;
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
 }
 </style>
