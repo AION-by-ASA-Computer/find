@@ -1,0 +1,65 @@
+# AION Search Engine Definition
+# File: server/modules/search/aion/definition.yml
+
+key: aion
+title: AION AI Search
+description: Advanced AI-powered search using AION pipeline with semantic understanding
+author: AION by ASA Computer Srl
+logo: https://static.requarks.io/logo/aion.svg
+website: https://aion-asa.com
+isAvailable: true
+supportedModes:
+  - create
+  - update  
+  - delete
+  - rename
+  - rebuild
+props:
+  serviceUrl:
+    type: String
+    default: 'http://localhost:8060'
+    title: AION Service URL
+    hint: URL of the AION indexing service
+    order: 1
+  indexingTimeout:
+    type: Number
+    default: 30000
+    title: Indexing Timeout (ms)
+    hint: Maximum time to wait for document indexing (milliseconds)
+    order: 2
+  enableSemanticSearch:
+    type: Boolean
+    default: true
+    title: Enable Semantic Search
+    hint: Use AI-powered semantic search capabilities
+    order: 3
+  maxResults:
+    type: Number
+    default: 50
+    title: Maximum Results
+    hint: Maximum number of search results to return
+    order: 4
+  fallbackSearch:
+    type: Boolean
+    default: true
+    title: Fallback to Database Search
+    hint: Fall back to database search if AION service is unavailable
+    order: 5
+  logIndexingErrors:
+    type: Boolean
+    default: true
+    title: Log Indexing Errors
+    hint: Log detailed error information when document indexing fails
+    order: 6
+  retryAttempts:
+    type: Number
+    default: 3
+    title: Retry Attempts
+    hint: Number of retry attempts for failed indexing operations
+    order: 7
+  apiTimeout:
+    type: Number
+    default: 10000
+    title: API Timeout (ms)
+    hint: Timeout for API calls to AION service
+    order: 8

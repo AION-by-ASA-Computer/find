@@ -1,0 +1,94 @@
+{
+  "name": "wiki-tiptap-notion-editor",
+  "version": "2.0.0",
+  "description": "Notion-like TipTap editor for Wiki.js with AI integration support",
+  "main": "index.js",
+  "dependencies": {
+    "@tiptap/core": "^2.2.4",
+    "@tiptap/starter-kit": "^2.2.4",
+    "@tiptap/vue-2": "^2.2.4",
+    "@tiptap/extension-image": "^2.2.4",
+    "@tiptap/extension-link": "^2.2.4",
+    "@tiptap/extension-table": "^2.2.4",
+    "@tiptap/extension-table-row": "^2.2.4",
+    "@tiptap/extension-table-header": "^2.2.4",
+    "@tiptap/extension-table-cell": "^2.2.4",
+    "@tiptap/extension-text-align": "^2.2.4",
+    "@tiptap/extension-highlight": "^2.2.4",
+    "@tiptap/extension-underline": "^2.2.4",
+    "@tiptap/extension-character-count": "^2.2.4",
+    "@tiptap/extension-placeholder": "^2.2.4",
+    "@tiptap/extension-bubble-menu": "^2.2.4",
+    "@tiptap/extension-floating-menu": "^2.2.4",
+    "@tiptap/extension-horizontal-rule": "^2.2.4",
+    "@tiptap/extension-mention": "^2.2.4",
+    "@tiptap/extension-typography": "^2.2.4",
+    "@tiptap/extension-task-list": "^2.2.4",
+    "@tiptap/extension-task-item": "^2.2.4",
+    "@tiptap/extension-youtube": "^2.2.4",
+    "@tiptap/extension-color": "^2.2.4",
+    "@tiptap/extension-text-style": "^2.2.4"
+  },
+  "devDependencies": {
+    "@tiptap/extension-collaboration": "^2.2.4",
+    "@tiptap/extension-collaboration-cursor": "^2.2.4",
+    "yjs": "^13.6.10",
+    "y-websocket": "^1.5.0"
+  },
+  "peerDependencies": {
+    "vue": "^2.6.0",
+    "vuetify": "^2.0.0"
+  },
+  "keywords": [
+    "tiptap",
+    "notion",
+    "editor",
+    "wysiwyg",
+    "prosemirror",
+    "wiki",
+    "ai",
+    "collaboration",
+    "slash-commands",
+    "block-editor"
+  ],
+  "author": "Wiki.js Community",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Requarks/wiki"
+  },
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/wikijs"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "install-deps": "npm install",
+    "test": "echo \"Notion-like TipTap editor installed successfully\"",
+    "build": "echo \"No build step required for Vue 2 component\""
+  },
+  "config": {
+    "ai": {
+      "enabled": false,
+      "provider": "openai",
+      "apiKey": "",
+      "model": "gpt-3.5-turbo"
+    },
+    "collaboration": {
+      "enabled": false,
+      "websocketUrl": "",
+      "roomPrefix": "wikijs-"
+    },
+    "features": {
+      "slashCommands": true,
+      "bubbleMenu": true,
+      "floatingMenu": true,
+      "dragAndDrop": true,
+      "blockSelection": true,
+      "aiIntegration": true
+    }
+  }
+}

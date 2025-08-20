@@ -22,21 +22,22 @@
                 light
                 ripple
                 )
-                v-card-text.text-center(@click='selectEditor("ckeditor")')
-                  img(src='/_assets/svg/editor-icon-ckeditor.svg', alt='Visual Editor', style='width: 36px;')
-                  .body-2.mt-2.primary--text Visual Editor
-                  .caption.grey--text Rich-text WYSIWYG
-            v-flex(xs4)
+                v-card-text.text-center(@click='selectEditor("tiptap")')
+                  v-icon(size='36', color='primary') mdi-pencil-box-outline
+                  .body-2.mt-2.primary--text TipTap Editor
+                  .caption.grey--text Modern WYSIWYG
+                  v-chip(x-small, color='green', text-color='white', style='position: absolute; top: 8px; right: 8px;') NEW
+            v-flex(xs6)
               v-card.radius-7.animated.fadeInUp.wait-p3s(
                 hover
                 light
                 ripple
                 )
-                v-card-text.text-center(@click='selectEditor("asciidoc")')
-                  img(src='/_assets/svg/editor-icon-asciidoc.svg', alt='AsciiDoc', style='width: 36px;')
-                  .body-2.primary--text.mt-2 AsciiDoc
-                  .caption.grey--text Plain Text Formatting
-            v-flex(xs4)
+                v-card-text.text-center(@click='selectEditor("ckeditor")')
+                  img(src='/_assets/svg/editor-icon-ckeditor.svg', alt='Visual Editor', style='width: 36px;')
+                  .body-2.mt-2.primary--text Visual Editor
+                  .caption.grey--text Traditional WYSIWYG
+            v-flex(xs6)
               v-card.radius-7.animated.fadeInUp.wait-p4s(
                 hover
                 light
@@ -48,6 +49,16 @@
                   .caption.grey--text Raw HTML
             v-flex(xs4)
               v-card.radius-7.animated.fadeInUp.wait-p5s(
+                hover
+                light
+                ripple
+                )
+                v-card-text.text-center(@click='selectEditor("asciidoc")')
+                  img(src='/_assets/svg/editor-icon-asciidoc.svg', alt='AsciiDoc', style='width: 36px;')
+                  .body-2.primary--text.mt-2 AsciiDoc
+                  .caption.grey--text Plain Text Formatting
+            v-flex(xs4)
+              v-card.radius-7.animated.fadeInUp.wait-p6s(
                 hover
                 light
                 ripple

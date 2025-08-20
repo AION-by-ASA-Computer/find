@@ -1,0 +1,47 @@
+# server/graph/schemas/editors.graphql
+
+# EDITORS
+
+extend type Query {
+  editors: EditorsQuery
+}
+
+extend type Mutation {
+  editors: EditorsMutation
+}
+
+type EditorsQuery {
+  list(
+    filter: String
+    orderBy: String
+  ): [Editor]
+}
+
+type EditorsMutation {
+  updateEditors(
+    editors: [EditorInput]!
+  ): DefaultResponse
+
+  refreshEditors: DefaultResponse
+}
+
+# TYPES
+
+type Editor {
+  key: String!
+  title: String!
+  description: String
+  contentType: String!
+  author: String
+  website: String
+  isEnabled: Boolean!
+  config: [KeyValuePair]
+}
+
+# INPUTS
+
+input EditorInput {
+  key: String!
+  isEnabled: Boolean!
+  config: [KeyValuePairInput]
+}

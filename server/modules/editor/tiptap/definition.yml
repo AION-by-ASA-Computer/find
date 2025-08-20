@@ -1,0 +1,53 @@
+key: tiptap
+title: TipTap Editor
+description: Modern WYSIWYG editor based on TipTap and ProseMirror
+contentType: html
+author: community
+props:
+  extensions:
+    type: Array
+    title: Extensions
+    hint: List of TipTap extensions to enable
+    default: 
+      - StarterKit
+      - Image
+      - Link
+      - Table
+      - TextAlign
+      - Highlight
+    order: 1
+  placeholder:
+    type: String
+    title: Placeholder Text
+    hint: Text to show when editor is empty
+    default: "Start typing your content here..."
+    order: 2
+  showCharacterCount:
+    type: Boolean
+    title: Show Character Count
+    hint: Display character and word count in status bar
+    default: true
+    order: 3
+  toolbar:
+    type: Array
+    title: Toolbar Items
+    hint: List of toolbar items to display
+    default:
+      - bold
+      - italic
+      - underline
+      - strike
+      - code
+      - heading
+      - bulletList
+      - orderedList
+      - blockquote
+      - codeBlock
+      - image
+      - link
+      - table
+      - textAlign
+      - highlight
+      - undo
+      - redo
+    order: 4

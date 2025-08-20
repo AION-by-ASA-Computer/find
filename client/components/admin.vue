@@ -68,6 +68,9 @@
             v-list-item(to='/rendering', color='primary')
               v-list-item-avatar(size='24', tile): v-icon mdi-cogs
               v-list-item-title {{ $t('admin:rendering.title') }}
+            v-list-item(to='/editor', color='primary', v-if='hasPermission(`manage:system`)')
+              v-list-item-avatar(size='24', tile): v-icon mdi-pencil-box-outline
+              v-list-item-title Editors
             v-list-item(to='/search', color='primary')
               v-list-item-avatar(size='24', tile): v-icon mdi-cloud-search-outline
               v-list-item-title {{ $t('admin:search.title') }}
