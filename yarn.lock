@@ -1433,6 +1433,26 @@
   dependencies:
     passport-oauth2 "^1.4.0"
 
+"@floating-ui/core@^1.7.3":
+  version "1.7.3"
+  resolved "https://registry.npmjs.org/@floating-ui/core/-/core-1.7.3.tgz"
+  integrity sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==
+  dependencies:
+    "@floating-ui/utils" "^0.2.10"
+
+"@floating-ui/dom@^1.0.0":
+  version "1.7.3"
+  resolved "https://registry.npmjs.org/@floating-ui/dom/-/dom-1.7.3.tgz"
+  integrity sha512-uZA413QEpNuhtb3/iIKoYMSK07keHPYeXF02Zhd6e213j+d1NamLix/mCLxBUDW/Gx52sPH2m+chlUsyaBs/Ag==
+  dependencies:
+    "@floating-ui/core" "^1.7.3"
+    "@floating-ui/utils" "^0.2.10"
+
+"@floating-ui/utils@^0.2.10":
+  version "0.2.10"
+  resolved "https://registry.npmjs.org/@floating-ui/utils/-/utils-0.2.10.tgz"
+  integrity sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==
+
 "@gar/promisify@^1.0.1":
   version "1.1.3"
   resolved "https://registry.npmjs.org/@gar/promisify/-/promisify-1.1.3.tgz"
@@ -2146,6 +2166,13 @@
   resolved "https://registry.npmjs.org/@tiptap/extension-bold/-/extension-bold-2.26.1.tgz"
   integrity sha512-zCce9PRuTNhadFir71luLo99HERDpGJ0EEflGm7RN8I1SnNi9gD5ooK42BOIQtejGCJqg3hTPZiYDJC2hXvckQ==
 
+"@tiptap/extension-bubble-menu@^3.2.0", "@tiptap/extension-bubble-menu@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@tiptap/extension-bubble-menu/-/extension-bubble-menu-3.2.0.tgz"
+  integrity sha512-ZTE/h7Bv/dWrnEdUcvff79aEsPSYnx7s311z5xFKmNaIg8OaSEypCNKav7+2ttSBt03HcSCm7cRUY0b8yY2Y+w==
+  dependencies:
+    "@floating-ui/dom" "^1.0.0"
+
 "@tiptap/extension-bullet-list@^2.26.1":
   version "2.26.1"
   resolved "https://registry.npmjs.org/@tiptap/extension-bullet-list/-/extension-bullet-list-2.26.1.tgz"
@@ -2175,6 +2202,11 @@
   version "2.26.1"
   resolved "https://registry.npmjs.org/@tiptap/extension-dropcursor/-/extension-dropcursor-2.26.1.tgz"
   integrity sha512-JkDQU2ZYFOuT5mNYb8OiWGwD1HcjbtmX8tLNugQbToECmz9WvVPqJmn7V/q8VGpP81iEECz/IsyRmuf2kSD4uA==
+
+"@tiptap/extension-floating-menu@^3.2.0", "@tiptap/extension-floating-menu@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@tiptap/extension-floating-menu/-/extension-floating-menu-3.2.0.tgz"
+  integrity sha512-CZJztT6eC8QKNwx+89PeJGhxSsGeU04/fPS18/y2DP4bEumrfTEq7jbtholJsLqErpghOdmm0XS+byYI6Dk9pg==
 
 "@tiptap/extension-gapcursor@^2.26.1":
   version "2.26.1"
@@ -2228,6 +2260,11 @@
   resolved "https://registry.npmjs.org/@tiptap/extension-list-item/-/extension-list-item-2.26.1.tgz"
   integrity sha512-quOXckC73Luc3x+Dcm88YAEBW+Crh3x5uvtQOQtn2GEG91AshrvbnhGRiYnfvEN7UhWIS+FYI5liHFcRKSUKrQ==
 
+"@tiptap/extension-list@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@tiptap/extension-list/-/extension-list-3.2.0.tgz"
+  integrity sha512-/3ZL9MpgDnEOv8tPwFwW3ct/TBbxZg3r3rN9noLHOR+YgiZKwbpMt9pDSJGu8y++rzT3vIHVmRRp0xFOXBvptQ==
+
 "@tiptap/extension-ordered-list@^2.26.1":
   version "2.26.1"
   resolved "https://registry.npmjs.org/@tiptap/extension-ordered-list/-/extension-ordered-list-2.26.1.tgz"
@@ -2237,6 +2274,11 @@
   version "2.26.1"
   resolved "https://registry.npmjs.org/@tiptap/extension-paragraph/-/extension-paragraph-2.26.1.tgz"
   integrity sha512-UezvM9VDRAVJlX1tykgHWSD1g3MKfVMWWZ+Tg+PE4+kizOwoYkRWznVPgCAxjmyHajxpCKRXgqTZkOxjJ9Kjzg==
+
+"@tiptap/extension-placeholder@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@tiptap/extension-placeholder/-/extension-placeholder-3.2.0.tgz"
+  integrity sha512-+yswlhZDJrCad2VXYe2NOZ9miMHFuIT7jGnKRCjIWiGpnRgB0FBSI7fjVBl1HmCDaSdVd+p0fOMHLTGYO5Fkdw==
 
 "@tiptap/extension-strike@^2.26.1":
   version "2.26.1"
@@ -2263,6 +2305,16 @@
   resolved "https://registry.npmjs.org/@tiptap/extension-table/-/extension-table-2.26.1.tgz"
   integrity sha512-LQ63CK53qx2ZsbLTB4mUX0YCoGC0GbYQ82jS3kD+K7M/mb9MCkefvDk6rA8rXF8TjfGnv6o/Fseoot8uhH3qfg==
 
+"@tiptap/extension-task-item@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@tiptap/extension-task-item/-/extension-task-item-3.2.0.tgz"
+  integrity sha512-NNxLQ038Wdaq4s8+31zki5HLIGBEuFlpAT1U93WWWMm7+rKsYOXMqHFprkRZs1J6pplydynFi/P4mt7s/Wj2GA==
+
+"@tiptap/extension-task-list@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@tiptap/extension-task-list/-/extension-task-list-3.2.0.tgz"
+  integrity sha512-x/qLFifGHhOn/c2Z7MTCy5ChkpzgIpDP4qy3m502i2oGKBcs8K6bRBSYxf4iD3WZcFxlua+Ada/bvPohw/VG9w==
+
 "@tiptap/extension-text-align@2.26.1":
   version "2.26.1"
   resolved "https://registry.npmjs.org/@tiptap/extension-text-align/-/extension-text-align-2.26.1.tgz"
@@ -2278,10 +2330,25 @@
   resolved "https://registry.npmjs.org/@tiptap/extension-text/-/extension-text-2.26.1.tgz"
   integrity sha512-p2n8WVMd/2vckdJlol24acaTDIZAhI7qle5cM75bn01sOEZoFlSw6SwINOULrUCzNJsYb43qrLEibZb4j2LeQw==
 
+"@tiptap/extension-typography@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@tiptap/extension-typography/-/extension-typography-3.2.0.tgz"
+  integrity sha512-6q8hcj+K/EU4WGmHuxwLcGeEnQ1zXh5QQLH3pgT1r/iDtZTdWjLBabZxJkTP7xBOfAH/xoQj+sRbuWeKBtf+xQ==
+
 "@tiptap/extension-underline@2.26.1":
   version "2.26.1"
   resolved "https://registry.npmjs.org/@tiptap/extension-underline/-/extension-underline-2.26.1.tgz"
   integrity sha512-/fufv41WDMdf0a4xmFAxONoAz08TonJXX6NEoSJmuGKO59M/Y0Pz8DTK1g32Wk44kn7dyScDiPlvvndl+UOv0A==
+
+"@tiptap/extension-youtube@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@tiptap/extension-youtube/-/extension-youtube-3.2.0.tgz"
+  integrity sha512-avWJTvLfoLoqQcQvJyn3zVBx+5/Ca50ayd4We9MAqZvo7R+H/yXFPFM4Sn9b/kqQ12qHWxG+4Vsl4K9S9XtGMA==
+
+"@tiptap/extensions@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@tiptap/extensions/-/extensions-3.2.0.tgz"
+  integrity sha512-voEvFhStH1fxw6PF5Hb7kj7PH+BMYM3d0S6d/V0bNdGB7mMsILruXkXIsxvP8Dkskv07Xmfs+iU6pdVy0hWD7Q==
 
 "@tiptap/pm@^2.26.1":
   version "2.26.1"
@@ -2333,6 +2400,16 @@
     "@tiptap/extension-text" "^2.26.1"
     "@tiptap/extension-text-style" "^2.26.1"
     "@tiptap/pm" "^2.26.1"
+
+"@tiptap/vue-2@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@tiptap/vue-2/-/vue-2-3.2.0.tgz"
+  integrity sha512-PU70yi0WqMvU+ebpc4Q5kEcpLUGRuWjWqFJt46RCi3oYRXKZCEFBwl1FbOuKdjEtLAqaD8rqH3kSTBEiiY6Dig==
+  dependencies:
+    vue-ts-types "1.6.2"
+  optionalDependencies:
+    "@tiptap/extension-bubble-menu" "^3.2.0"
+    "@tiptap/extension-floating-menu" "^3.2.0"
 
 "@tokenizer/token@^0.1.0", "@tokenizer/token@^0.1.1":
   version "0.1.1"
@@ -18219,6 +18296,11 @@ vue-template-es2015-compiler@^1.9.0:
   version "1.9.1"
   resolved "https://registry.npmjs.org/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.9.1.tgz"
   integrity sha512-4gDntzrifFnCEvyoO8PqyJDmguXgVPxKiIxrBKjIowvL9l+N66196+72XVYR8BBf1Uv1Fgt3bGevJ+sEmxfZzw==
+
+vue-ts-types@1.6.2:
+  version "1.6.2"
+  resolved "https://registry.npmjs.org/vue-ts-types/-/vue-ts-types-1.6.2.tgz"
+  integrity sha512-iOBe4oMoTeISs+Wxlt5E6q3W6lEX6UtkwWCPu6727IoweBE3O3Vp/2/BtO+Kf5pISQU7WpX71hXTeMGqHsmecA==
 
 vue@^2.5.13, vue@^2.6.10, vue@2.6.14:
   version "2.6.14"
