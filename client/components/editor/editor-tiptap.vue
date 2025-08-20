@@ -12,6 +12,12 @@
             v-icon mdi-format-underline
           v-btn(icon, small, @click='toggleStrike', :color='editor && editor.isActive("strike") ? "primary" : ""')
             v-icon mdi-format-strikethrough
+          v-btn(icon, small, @click='toggleSuperscript', :color='editor && editor.isActive("superscript") ? "primary" : ""')
+            v-icon mdi-format-superscript
+          v-btn(icon, small, @click='toggleSubscript', :color='editor && editor.isActive("subscript") ? "primary" : ""')
+            v-icon mdi-format-subscript
+          v-btn(icon, small, @click='toggleHighlight', :color='editor && editor.isActive("highlight") ? "primary" : ""')
+            v-icon mdi-marker
         
         v-divider(vertical)
         
@@ -44,14 +50,32 @@
             v-icon mdi-minus
         
         v-divider(vertical)
+
+
+        
+        .toolbar-group
+          v-btn(icon, small, @click='setTextAlign("left")', :color='editor && editor.isActive({ textAlign: "left" }) ? "primary" : ""', title='Align Left')
+            v-icon mdi-format-align-left
+          v-btn(icon, small, @click='setTextAlign("center")', :color='editor && editor.isActive({ textAlign: "center" }) ? "primary" : ""', title='Align Center')
+            v-icon mdi-format-align-center
+          v-btn(icon, small, @click='setTextAlign("right")', :color='editor && editor.isActive({ textAlign: "right" }) ? "primary" : ""', title='Align Right')
+            v-icon mdi-format-align-right
+          v-btn(icon, small, @click='setTextAlign("justify")', :color='editor && editor.isActive({ textAlign: "justify" }) ? "primary" : ""', title='Justify')
+            v-icon mdi-format-align-justify
+        
+        v-divider(vertical)
+        
+        .toolbar-group
+          v-btn(icon, small, @click='undo', :disabled='!editor || !editor.can().undo()', title='Undo')
+            v-icon mdi-undo
+          v-btn(icon, small, @click='redo', :disabled='!editor || !editor.can().redo()', title='Redo')
+            v-icon mdi-redo
         
         .toolbar-group.ai-group
-          v-btn(icon, small, @click='aiImproveText', color='purple', :disabled='!hasSelection')
-            v-icon mdi-auto-fix
-          v-btn(icon, small, @click='aiContinueWriting', color='purple')
-            v-icon mdi-pencil-plus
-          v-btn(icon, small, @click='aiSummarize', color='purple', :disabled='!hasSelection')
-            v-icon mdi-format-list-text
+          v-btn(icon, small, @click='showWriteWithAI', color='purple', title='Write with AI')
+            v-icon mdi-brain
+          v-btn(icon, small, @click='openAIPanel', color='purple', :disabled='!hasSelection', title='AI Tools for Selection')
+            v-icon mdi-robot
 
     // Bubble Menu per formattazione inline (con AI)
     .bubble-menu(
@@ -67,6 +91,12 @@
           v-icon(size='16') mdi-format-underline
         button.bubble-btn(@click='toggleCode', :class='{ active: editor.isActive("code") }')
           v-icon(size='16') mdi-code-tags
+        button.bubble-btn(@click='toggleSuperscript', :class='{ active: editor.isActive("superscript") }')
+          v-icon(size='16') mdi-format-superscript
+        button.bubble-btn(@click='toggleSubscript', :class='{ active: editor.isActive("subscript") }')
+          v-icon(size='16') mdi-format-subscript
+        button.bubble-btn(@click='toggleHighlight', :class='{ active: editor.isActive("highlight") }')
+          v-icon(size='16') mdi-marker
         
         .bubble-divider
         
@@ -75,12 +105,91 @@
         
         .bubble-divider
         
-        button.bubble-btn.ai-btn(@click='aiImproveText', title='Improve with AI')
-          v-icon(size='16') mdi-auto-fix
-        button.bubble-btn.ai-btn(@click='aiSummarize', title='Summarize with AI')
-          v-icon(size='16') mdi-format-list-text
-        button.bubble-btn.ai-btn(@click='aiTranslate', title='Translate with AI')
-          v-icon(size='16') mdi-translate
+        button.bubble-btn.ai-btn(@click='openAIPanel', title='AI Tools')
+          v-icon(size='16') mdi-robot
+
+    // AI Panel per selezioni di testo
+    .ai-panel(
+      v-if='showAIPanel && hasSelection'
+      :style='aiPanelStyle'
+    )
+      .ai-panel-content
+        .ai-panel-header
+          v-icon(size='18', color='purple') mdi-robot
+          span.ml-2 AI Assistant
+          v-btn(icon, x-small, @click='closeAIPanel')
+            v-icon(size='16') mdi-close
+        
+        .ai-panel-body
+          .ai-custom-prompt
+            .prompt-label Descrivi cosa vuoi fare con il testo selezionato:
+            .textarea-container
+              textarea.ai-textarea(
+                v-model='aiCustomPrompt'
+                placeholder='Es. "Rendilo più formale", "Semplifica il linguaggio", "Aggiungi esempi"...'
+                rows='3'
+                @keydown.enter.ctrl.prevent='executeCustomAI'
+                @keydown.enter.cmd.prevent='executeCustomAI'
+              )
+          
+          .ai-quick-actions
+            .quick-action-label Azioni Rapide:
+            .quick-buttons
+              v-btn(
+                small
+                outlined
+                color='purple'
+                @click='aiQuickAction("summarize")'
+                :loading='aiActionLoading === "summarize"'
+                :disabled='aiActionLoading !== null'
+              )
+                v-icon(left, size='14') mdi-format-list-text
+                | Riassumi
+              
+              v-btn(
+                small
+                outlined
+                color='purple'
+                @click='aiQuickAction("expand")'
+                :loading='aiActionLoading === "expand"'
+                :disabled='aiActionLoading !== null'
+              )
+                v-icon(left, size='14') mdi-arrow-expand-all
+                | Espandi
+              
+              v-btn(
+                small
+                outlined
+                color='purple'
+                @click='aiQuickAction("translate")'
+                :loading='aiActionLoading === "translate"'
+                :disabled='aiActionLoading !== null'
+              )
+                v-icon(left, size='14') mdi-translate
+                | Traduci
+              
+              v-btn(
+                small
+                outlined
+                color='purple'
+                @click='aiQuickAction("improve")'
+                :loading='aiActionLoading === "improve"'
+                :disabled='aiActionLoading !== null'
+              )
+                v-icon(left, size='14') mdi-auto-fix
+                | Migliora
+          
+          .ai-custom-action(v-if='aiCustomPrompt.trim()')
+            v-btn(
+              small
+              color='purple'
+              @click='executeCustomAI'
+              :loading='aiActionLoading === "custom"'
+              :disabled='aiActionLoading !== null'
+              block
+            )
+              v-icon(left, size='14') mdi-creation
+              | Applica Richiesta Personalizzata
 
     // Main Editor Content
     .editor-content-wrapper
@@ -117,9 +226,9 @@
           :key='`drop-${index}`'
           :style='{ top: zone.top + "px" }'
           :class='{ active: dragTarget === index }'
-          @dragover.prevent='dragTarget = index'
-          @dragleave='dragTarget = -1'
-          @drop='handleDrop(index, $event)'
+          @dragover.prevent='handleDragOver(index, $event)'
+          @dragleave='handleDragLeave'
+          @drop.prevent='handleDrop(index, $event)'
         )
         
         // Floating plus button per blocchi vuoti
@@ -182,6 +291,53 @@
           .subtitle-1 AI is thinking...
           .caption Please wait a moment
 
+    // Write with AI Dialog - Apple Intelligence style
+    v-dialog(v-model='writeWithAIDialog', max-width='500', persistent)
+      v-card.write-ai-card
+        v-card-title.write-ai-header
+          v-icon(color='purple', size='24') mdi-brain
+          span.ml-2 Write with AI
+          v-spacer
+          v-btn(icon, small, @click='closeWriteWithAI')
+            v-icon mdi-close
+        
+        v-card-text.write-ai-content
+          .write-ai-prompt
+            .prompt-label Descrivi cosa vuoi scrivere:
+            .textarea-container
+              textarea.ai-textarea(
+                v-model='aiPrompt'
+                placeholder='Es. "Scrivi un articolo sui benefici del lavoro remoto", "Crea una lista di consigli per il fitness"...'
+                rows='4'
+                @keydown.ctrl.enter='generateWithAI'
+                @keydown.cmd.enter='generateWithAI'
+                ref='aiPromptInput'
+              )
+          
+          .write-ai-preview(v-if='aiGeneratedText')
+            .preview-header
+              v-icon(size='16', color='purple') mdi-auto-fix
+              span.ml-1 Contenuto Generato dall'AI
+            .preview-content {{ aiGeneratedText }}
+        
+        v-card-actions.write-ai-actions
+          v-btn(text, @click='closeWriteWithAI') Cancel
+          v-btn(
+            color='purple',
+            @click='generateWithAI',
+            :loading='aiGenerating',
+            :disabled='!aiPrompt.trim()'
+          )
+            v-icon(left) mdi-creation
+            | Generate
+          v-btn(
+            v-if='aiGeneratedText',
+            color='primary',
+            @click='insertAIContent'
+          )
+            v-icon(left) mdi-plus
+            | Insert
+
     // Status Bar
     v-system-bar.editor-status-bar(dark, status, color='grey darken-3')
       .caption.editor-locale {{locale.toUpperCase()}}
@@ -216,6 +372,8 @@ import Placeholder from '@tiptap/extension-placeholder'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
+import Superscript from '@tiptap/extension-superscript'
+import Subscript from '@tiptap/extension-subscript'
 
 /* global siteLangs */
 
@@ -259,6 +417,20 @@ export default {
       
       // Selection state
       hasSelection: false,
+      lastValidContent: '',
+      
+      // Write with AI dialog
+      writeWithAIDialog: false,
+      aiPrompt: '',
+      aiGeneratedText: '',
+      aiGenerating: false,
+      
+      // AI Panel for text selection
+      aiPanelOpen: false,
+      aiPanelStyle: {},
+      aiCustomPrompt: '',
+      aiActionLoading: null, // tracks which action is loading
+      selectedText: '',
       
       // Commands data
       slashSections: [
@@ -442,6 +614,10 @@ export default {
     
     allCommands() {
       return this.filteredSlashSections.reduce((all, section) => all.concat(section.commands), [])
+    },
+    
+    showAIPanel() {
+      return this.aiPanelOpen && this.hasSelection
     }
   },
   
@@ -460,6 +636,8 @@ export default {
             }
           }),
           Underline,
+          Superscript,
+          Subscript,
           Image.configure({
             HTMLAttributes: { class: 'notion-image' }
           }),
@@ -518,6 +696,16 @@ export default {
               }
             }
             return false
+          },
+          handleDrop: (view, event, slice, moved) => {
+            // Prevent default text drop behavior that causes number insertion
+            const dragData = event.dataTransfer.getData('text/plain')
+            if (dragData && !isNaN(dragData)) {
+              // This is our block drag, prevent default text insertion
+              event.preventDefault()
+              return true
+            }
+            return false
           }
         },
         onUpdate: _.debounce(({ editor }) => {
@@ -525,6 +713,10 @@ export default {
           this.$store.set('editor/content', html)
           this.updateStats()
           this.updateBlockHandles()
+          
+          // Create a backup of content before any modifications
+          this.lastValidContent = html
+          
           // Save only on significant changes, not every keystroke
           if (this.shouldSave(html)) {
             this.save()
@@ -557,6 +749,14 @@ export default {
       // Update selection state for toolbar
       this.hasSelection = !empty
       
+      // Get selected text
+      if (!empty) {
+        this.selectedText = this.editor.state.doc.textBetween(from, to)
+      } else {
+        this.selectedText = ''
+        this.aiPanelOpen = false // Close AI panel when no selection
+      }
+      
       // Bubble menu visibility
       this.showBubbleMenu = !empty && !this.isMobile
       if (this.showBubbleMenu) {
@@ -566,6 +766,16 @@ export default {
           left: `${coords.left}px`,
           top: `${coords.top - 60}px`,
           zIndex: 1000
+        }
+        
+        // Position AI panel relative to bubble menu
+        if (this.aiPanelOpen) {
+          this.aiPanelStyle = {
+            position: 'fixed',
+            left: `${coords.left}px`,
+            top: `${coords.top + 10}px`,
+            zIndex: 1001
+          }
         }
       }
       
@@ -625,7 +835,8 @@ export default {
           return {
             index,
             element: block,
-            top: rect.top - editorRect.top + editorElement.scrollTop
+            top: rect.top - editorRect.top + editorElement.scrollTop,
+            realIndex: this.findRealBlockIndex(block) // Add real document index
           }
         })
         
@@ -635,6 +846,29 @@ export default {
           top: index === 0 ? block.top - 10 : (this.visibleBlocks[index - 1].top + block.top) / 2
         }))
       })
+    },
+
+    findRealBlockIndex(targetElement) {
+      if (!this.editor) return -1
+      
+      let blockIndex = 0
+      let found = false
+      
+      this.editor.state.doc.descendants((node, pos) => {
+        if (found) return false
+        
+        if (node.isBlock && node.type.name !== 'doc') {
+          // Try to match this node with our DOM element
+          const domNode = this.editor.view.nodeDOM(pos)
+          if (domNode === targetElement || (domNode && domNode.contains && domNode.contains(targetElement))) {
+            found = true
+            return false
+          }
+          blockIndex++
+        }
+      })
+      
+      return found ? blockIndex : -1
     },
 
     // Toolbar actions
@@ -685,6 +919,30 @@ export default {
 
     toggleCode() {
       this.editor.chain().focus().toggleCode().run()
+    },
+
+    toggleSuperscript() {
+      this.editor.chain().focus().toggleSuperscript().run()
+    },
+
+    toggleSubscript() {
+      this.editor.chain().focus().toggleSubscript().run()
+    },
+
+    toggleHighlight() {
+      this.editor.chain().focus().toggleHighlight().run()
+    },
+
+    setTextAlign(alignment) {
+      this.editor.chain().focus().setTextAlign(alignment).run()
+    },
+
+    undo() {
+      this.editor.chain().focus().undo().run()
+    },
+
+    redo() {
+      this.editor.chain().focus().redo().run()
     },
 
     setLink() {
@@ -787,21 +1045,48 @@ export default {
 
     // Block drag & drop
     startDrag(index, event) {
+      const block = this.visibleBlocks[index]
+      if (!block) return
+      
       this.draggedBlock = index
+      const realIndex = block.realIndex
+      
       event.dataTransfer.effectAllowed = 'move'
-      event.dataTransfer.setData('text/html', this.visibleBlocks[index].element.outerHTML)
-      event.dataTransfer.setData('text/plain', index.toString())
+      event.dataTransfer.setData('text/plain', realIndex.toString())
+      
+      console.log('Starting drag:', { visualIndex: index, realIndex, blockType: block.element.tagName })
       
       // Add visual feedback
-      event.target.style.opacity = '0.5'
+      const dragHandle = event.target.closest('.block-handle')
+      if (dragHandle) {
+        dragHandle.style.opacity = '0.5'
+      }
     },
 
     handleDrop(targetIndex, event) {
       event.preventDefault()
-      const sourceIndex = parseInt(event.dataTransfer.getData('text/plain'))
+      const sourceRealIndex = parseInt(event.dataTransfer.getData('text/plain'))
+      const targetBlock = this.visibleBlocks[targetIndex]
       
-      if (sourceIndex !== targetIndex && sourceIndex !== -1) {
-        this.moveBlock(sourceIndex, targetIndex)
+      if (!targetBlock) {
+        console.log('No target block found')
+        return
+      }
+      
+      const targetRealIndex = targetBlock.realIndex
+      
+      console.log('Drop event:', { 
+        sourceRealIndex, 
+        targetRealIndex, 
+        visualTargetIndex: targetIndex,
+        draggedBlock: this.draggedBlock 
+      })
+      
+      if (sourceRealIndex !== targetRealIndex && sourceRealIndex !== -1 && !isNaN(sourceRealIndex)) {
+        console.log('Moving block from real index', sourceRealIndex, 'to real index', targetRealIndex)
+        this.moveBlockSafely(sourceRealIndex, targetRealIndex)
+      } else {
+        console.log('Drop cancelled - invalid indices or same position')
       }
       
       // Reset visual state
@@ -809,71 +1094,93 @@ export default {
       this.dragTarget = -1
       
       // Reset opacity
-      const draggedElement = document.querySelector('.block-drag-handle[draggable="true"]')
-      if (draggedElement) {
-        draggedElement.style.opacity = '1'
-      }
+      document.querySelectorAll('.block-handle').forEach(handle => {
+        handle.style.opacity = '1'
+      })
     },
 
-    moveBlock(fromIndex, toIndex) {
-      if (!this.editor) return
+    moveBlockSafely(fromIndex, toIndex) {
+      if (!this.editor || fromIndex === toIndex) return
       
-      const { state, dispatch } = this.editor.view
-      const { tr } = state
-      
-      // Find the actual positions in the document
-      const fromBlock = this.visibleBlocks[fromIndex]
-      const toBlock = this.visibleBlocks[toIndex]
-      
-      if (!fromBlock || !toBlock) return
-      
-      // Get the content to move
-      const fromPos = this.getBlockPosition(fromBlock.element)
-      const toPos = this.getBlockPosition(toBlock.element)
-      
-      if (fromPos && toPos) {
-        // Create transaction to move the block
-        const slice = tr.doc.slice(fromPos.start, fromPos.end)
-        tr.delete(fromPos.start, fromPos.end)
+      try {
+        const { state } = this.editor
+        const { tr, schema } = state
         
-        // Adjust target position if moving up
-        const adjustedToPos = fromIndex < toIndex ? toPos.start - (fromPos.end - fromPos.start) : toPos.start
-        tr.insert(adjustedToPos, slice.content)
+        // Find the actual node positions in the document
+        let fromPos = null
+        let toPos = null
+        let currentPos = 0
+        let blockIndex = 0
         
-        dispatch(tr)
-        this.updateBlockHandles()
-      }
-    },
-
-    getBlockPosition(element) {
-      if (!this.editor) return null
-      
-      // Find the position of the element in the editor
-      const editorElement = document.querySelector('.notion-editor-content')
-      if (!editorElement) return null
-      
-      const walker = document.createTreeWalker(
-        editorElement,
-        NodeFilter.SHOW_ELEMENT,
-        { acceptNode: () => NodeFilter.FILTER_ACCEPT }
-      )
-      
-      let pos = 0
-      let node
-      
-      while (node = walker.nextNode()) {
-        if (node === element) {
-          // Found the element, now find its position in the document
-          const domNode = this.editor.view.domAtPos(pos)
-          return {
-            start: pos,
-            end: pos + (element.textContent?.length || 0) + 1
+        // Walk through the document to find positions
+        state.doc.descendants((node, pos) => {
+          if (node.isBlock && node.type.name !== 'doc') {
+            if (blockIndex === fromIndex) {
+              fromPos = { start: pos, end: pos + node.nodeSize }
+            }
+            if (blockIndex === toIndex) {
+              toPos = { start: pos, end: pos + node.nodeSize }
+            }
+            blockIndex++
           }
+        })
+        
+        if (!fromPos || !toPos) {
+          console.error('Could not find block positions')
+          return
         }
-        pos += node.textContent?.length || 0
+        
+        // Create a new transaction
+        const newTr = tr
+        
+        // Get the content to move
+        const slice = newTr.doc.slice(fromPos.start, fromPos.end)
+        
+        // Delete the source block first
+        newTr.delete(fromPos.start, fromPos.end)
+        
+        // Adjust target position if moving down
+        let insertPos = toPos.start
+        if (fromIndex < toIndex) {
+          insertPos = toPos.start - (fromPos.end - fromPos.start)
+        }
+        
+        // Insert at the new position
+        newTr.insert(insertPos, slice.content)
+        
+        // Apply the transaction
+        this.editor.view.dispatch(newTr)
+        
+        // Update block handles
+        setTimeout(() => {
+          this.updateBlockHandles()
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: 'Block moved successfully!',
+            icon: 'check'
+          })
+        }, 100)
+        
+      } catch (error) {
+        console.error('Error moving block:', error)
+        this.$store.commit('showNotification', {
+          style: 'error',
+          message: 'Cannot move this block type. Try moving text blocks.',
+          icon: 'alert'
+        })
       }
-      
-      return null
+    },
+
+    handleDragOver(index, event) {
+      event.preventDefault()
+      this.dragTarget = index
+    },
+
+    handleDragLeave() {
+      // Use a small delay to prevent flickering when moving between elements
+      setTimeout(() => {
+        this.dragTarget = -1
+      }, 50)
     },
 
     // Media actions
@@ -982,6 +1289,178 @@ export default {
           icon: 'robot'
         })
       }, 1500)
+    },
+
+    // Write with AI functions
+    showWriteWithAI() {
+      this.writeWithAIDialog = true
+      this.aiPrompt = ''
+      this.aiGeneratedText = ''
+      this.aiGenerating = false
+      
+      this.$nextTick(() => {
+        if (this.$refs.aiPromptInput) {
+          this.$refs.aiPromptInput.focus()
+        }
+      })
+    },
+
+    closeWriteWithAI() {
+      this.writeWithAIDialog = false
+      this.aiPrompt = ''
+      this.aiGeneratedText = ''
+      this.aiGenerating = false
+    },
+
+    generateWithAI() {
+      if (!this.aiPrompt.trim()) return
+      
+      this.aiGenerating = true
+      
+      // Simulate AI generation with Lorem Ipsum
+      setTimeout(() => {
+        const loremTexts = [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+          "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+          "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
+          "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt."
+        ]
+        
+        const randomText = loremTexts[Math.floor(Math.random() * loremTexts.length)]
+        this.aiGeneratedText = `Based on "${this.aiPrompt}": ${randomText}`
+        this.aiGenerating = false
+        
+      }, 2000) // 2 second delay to simulate AI processing
+    },
+
+    insertAIContent() {
+      if (!this.aiGeneratedText || !this.editor) return
+      
+      // Insert the AI generated content with animation effect
+      this.editor.chain().focus().insertContent(`<p>${this.aiGeneratedText}</p>`).run()
+      
+      // Update block handles after insertion
+      setTimeout(() => this.updateBlockHandles(), 100)
+      
+      this.$store.commit('showNotification', {
+        style: 'success',
+        message: 'AI content inserted successfully!',
+        icon: 'check'
+      })
+      
+      this.closeWriteWithAI()
+    },
+
+    // AI Panel functions
+    openAIPanel() {
+      if (!this.hasSelection) {
+        this.$store.commit('showNotification', {
+          style: 'warning',
+          message: 'Select text to use AI tools',
+          icon: 'robot'
+        })
+        return
+      }
+      
+      this.aiPanelOpen = true
+      this.aiCustomPrompt = ''
+      this.aiActionLoading = null
+      
+      // Update AI panel position
+      const { selection } = this.editor.state
+      const { from } = selection
+      const coords = this.editor.view.coordsAtPos(from)
+      
+      this.aiPanelStyle = {
+        position: 'fixed',
+        left: `${coords.left}px`,
+        top: `${coords.top + 10}px`,
+        zIndex: 1001
+      }
+    },
+
+    showAIPanel() {
+      if (!this.hasSelection) return
+      
+      this.aiPanelOpen = true
+      this.aiCustomPrompt = ''
+      this.aiActionLoading = null
+    },
+
+    closeAIPanel() {
+      this.aiPanelOpen = false
+      this.aiCustomPrompt = ''
+      this.aiActionLoading = null
+    },
+
+    aiQuickAction(action) {
+      if (!this.selectedText) return
+      
+      this.aiActionLoading = action
+      
+      const actions = {
+        summarize: () => {
+          const summary = `Riassunto: ${this.selectedText.substring(0, 50)}... [Versione condensata del testo originale]`
+          this.replaceSelectedText(summary)
+        },
+        expand: () => {
+          const expanded = `${this.selectedText} [Versione espansa con dettagli aggiuntivi, esempi e approfondimenti per rendere il contenuto più completo e comprensibile]`
+          this.replaceSelectedText(expanded)
+        },
+        translate: () => {
+          const translated = `[EN] ${this.selectedText} [Tradotto automaticamente in inglese mantenendo il significato originale]`
+          this.replaceSelectedText(translated)
+        },
+        improve: () => {
+          const improved = `${this.selectedText.replace(/\b\w/g, l => l.toUpperCase())} [Migliorato con linguaggio più professionale e struttura ottimizzata]`
+          this.replaceSelectedText(improved)
+        }
+      }
+      
+      setTimeout(() => {
+        actions[action]()
+        this.aiActionLoading = null
+        this.closeAIPanel()
+        
+        const actionNames = {
+          summarize: 'riassunto',
+          expand: 'espanso', 
+          translate: 'tradotto',
+          improve: 'migliorato'
+        }
+        
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: `Testo ${actionNames[action]} con AI!`,
+          icon: 'check'
+        })
+      }, 1500)
+    },
+
+    executeCustomAI() {
+      if (!this.aiCustomPrompt.trim() || !this.selectedText) return
+      
+      this.aiActionLoading = 'custom'
+      
+      setTimeout(() => {
+        const customResult = `${this.selectedText} [Modificato secondo: "${this.aiCustomPrompt}"]`
+        this.replaceSelectedText(customResult)
+        this.aiActionLoading = null
+        this.closeAIPanel()
+        
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: 'Custom AI transformation applied!',
+          icon: 'check'
+        })
+      }, 2000)
+    },
+
+    replaceSelectedText(newText) {
+      if (!this.editor) return
+      
+      const { from, to } = this.editor.state.selection
+      this.editor.chain().focus().deleteRange({ from, to }).insertContent(newText).run()
     }
   },
 
@@ -1033,6 +1512,7 @@ export default {
     
     window.removeEventListener('resize', this.updateBlockHandles)
   }
+
 }
 </script>
 
@@ -1099,6 +1579,212 @@ $notion-radius: 6px;
       min-width: 36px !important;
       width: 36px;
       height: 36px;
+    }
+  }
+
+
+  // AI Panel per selezioni di testo
+  .ai-panel {
+    z-index: 1001;
+    width: 320px;
+    background: white;
+    border: 1px solid $notion-border;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+
+    @at-root .theme--dark & {
+      background: #2d2d2d;
+      border-color: #404040;
+    }
+
+    .ai-panel-content {
+      .ai-panel-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+
+        .v-btn {
+          color: white !important;
+          margin-left: auto;
+        }
+      }
+
+      .ai-panel-body {
+        padding: 16px;
+
+        .ai-custom-prompt {
+          margin-bottom: 16px;
+
+          .v-textarea {
+            .v-input__control .v-input__slot {
+              border-radius: 8px !important;
+              background: #f8f9fa;
+
+              @at-root .theme--dark & {
+                background: #383838;
+              }
+            }
+          }
+        }
+
+        .ai-quick-actions {
+          .quick-action-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: $notion-text-light;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+
+            @at-root .theme--dark & {
+              color: #9b9b9b;
+            }
+          }
+
+          .quick-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+
+            .v-btn {
+              height: 36px !important;
+              border-radius: 8px !important;
+              text-transform: none !important;
+              font-weight: 500 !important;
+              font-size: 12px !important;
+
+              &.v-btn--outlined {
+                border-color: #667eea !important;
+                
+                &:hover {
+                  background: rgba(102, 126, 234, 0.08) !important;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Write with AI Dialog - Apple Intelligence style
+  .write-ai-card {
+    border-radius: 16px !important;
+    overflow: hidden;
+    
+    .write-ai-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white !important;
+      padding: 20px 24px !important;
+      
+      .v-icon {
+        color: white !important;
+      }
+    }
+    
+    .write-ai-content {
+      padding: 24px !important;
+      
+      .write-ai-prompt {
+        margin-bottom: 16px;
+        
+        .prompt-label {
+          font-size: 14px;
+          font-weight: 500;
+          color: $notion-text;
+          margin-bottom: 8px;
+
+          @at-root .theme--dark & {
+            color: #e6e6e6;
+          }
+        }
+        
+        .textarea-container {
+          .ai-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+            background: #f8f9fa;
+            
+            &:focus {
+              border-color: #667eea;
+              background: white;
+              box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+            }
+            
+            &::placeholder {
+              color: #999;
+            }
+
+            @at-root .theme--dark & {
+              background: #2d2d2d;
+              border-color: #404040;
+              color: #e6e6e6;
+              
+              &:focus {
+                background: #383838;
+                border-color: #667eea;
+              }
+              
+              &::placeholder {
+                color: #9b9b9b;
+              }
+            }
+          }
+        }
+      }
+      
+      .write-ai-preview {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 16px;
+        border-left: 4px solid #667eea;
+        
+        @at-root .theme--dark & {
+          background: #2d2d2d;
+        }
+        
+        .preview-header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 12px;
+          font-weight: 600;
+          color: #667eea;
+          font-size: 14px;
+        }
+        
+        .preview-content {
+          line-height: 1.6;
+          color: $notion-text;
+          
+          @at-root .theme--dark & {
+            color: #e6e6e6;
+          }
+        }
+      }
+    }
+    
+    .write-ai-actions {
+      padding: 16px 24px 20px !important;
+      gap: 8px;
+      
+      .v-btn {
+        border-radius: 8px !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+      }
     }
   }
 
@@ -1548,35 +2234,112 @@ $notion-radius: 6px;
       padding: 2px 0;
     }
 
-    // Tables
-    .notion-table {
+    // Tables - Fix per visibilità
+    table {
       border-collapse: collapse;
       width: 100%;
       margin: 2em 0;
-      border: 1px solid $notion-border;
+      border: 2px solid $notion-border !important;
       border-radius: 8px;
-      overflow: hidden;
+      overflow: visible;
+      background: white !important;
+      display: table !important;
 
       @at-root .theme--dark & {
-        border-color: #404040;
+        border-color: #404040 !important;
+        background: #2d2d2d !important;
       }
       
-      th, td {
-        border: 1px solid $notion-border;
-        padding: 12px 16px;
-        text-align: left;
+      tbody, thead {
+        display: table-row-group !important;
+      }
+      
+      tr {
+        display: table-row !important;
+        
+        th, td {
+          display: table-cell !important;
+          border: 1px solid $notion-border !important;
+          padding: 12px 16px !important;
+          text-align: left;
+          vertical-align: top;
+          min-width: 100px;
+          background: white !important;
 
-        @at-root .theme--dark & {
-          border-color: #404040;
+          @at-root .theme--dark & {
+            border-color: #404040 !important;
+            background: #2d2d2d !important;
+            color: #e6e6e6 !important;
+          }
+        }
+
+        th {
+          background: #f8f9fa !important;
+          font-weight: 600 !important;
+          border-bottom: 2px solid $notion-border !important;
+
+          @at-root .theme--dark & {
+            background: #404040 !important;
+            border-bottom-color: #555 !important;
+            color: #ffffff !important;
+          }
+        }
+
+        &:hover {
+          th, td {
+            background: #f5f5f5 !important;
+
+            @at-root .theme--dark & {
+              background: #383838 !important;
+            }
+          }
+
+          th {
+            background: #e9ecef !important;
+
+            @at-root .theme--dark & {
+              background: #4a4a4a !important;
+            }
+          }
         }
       }
+    }
 
-      th {
-        background: #f8f9fa;
-        font-weight: 600;
+    // Fallback per tabelle che potrebbero avere altre classi
+    .notion-table,
+    .ProseMirror table {
+      border-collapse: collapse !important;
+      width: 100% !important;
+      margin: 2em 0 !important;
+      border: 2px solid $notion-border !important;
+      background: white !important;
+      display: table !important;
 
-        @at-root .theme--dark & {
-          background: #2d2d2d;
+      @at-root .theme--dark & {
+        border-color: #404040 !important;
+        background: #2d2d2d !important;
+      }
+
+      tr {
+        th, td {
+          border: 1px solid $notion-border !important;
+          padding: 12px 16px !important;
+          background: white !important;
+          display: table-cell !important;
+
+          @at-root .theme--dark & {
+            border-color: #404040 !important;
+            background: #2d2d2d !important;
+          }
+        }
+
+        th {
+          background: #f8f9fa !important;
+          font-weight: 600 !important;
+
+          @at-root .theme--dark & {
+            background: #404040 !important;
+          }
         }
       }
     }
