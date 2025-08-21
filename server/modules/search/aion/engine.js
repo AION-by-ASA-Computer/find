@@ -16,12 +16,12 @@ module.exports = {
       const response = await axios.get(`${this.config.serviceUrl}/health`, {
         timeout: this.config.apiTimeout || 10000
       })
-      
+
       if (response.data.status !== 'healthy') {
         WIKI.logger.warn(`(SEARCH/AION) Service status: ${response.data.status}`)
         WIKI.logger.warn(`(SEARCH/AION) Service details:`, response.data.services)
       }
-      
+
       WIKI.logger.info(`(SEARCH/AION) Connected to AION service at ${this.config.serviceUrl}`)
     } catch (err) {
       WIKI.logger.error(`(SEARCH/AION) Failed to connect to AION service: ${err.message}`)
@@ -43,7 +43,7 @@ module.exports = {
    */
   async init() {
     WIKI.logger.info(`(SEARCH/AION) Initializing...`)
-    
+
     // Set default config values
     this.config = _.defaults(this.config, {
       serviceUrl: 'http://localhost:8060',
@@ -68,7 +68,7 @@ module.exports = {
   async query(q, opts) {
     try {
       WIKI.logger.info(`(SEARCH/AION) Executing semantic search: ${q}`)
-      
+
       // Use AION semantic search if enabled
       if (this.config.enableSemanticSearch) {
         return await this._semanticSearch(q, opts)
@@ -122,13 +122,13 @@ module.exports = {
    */
   async renamed(page) {
     WIKI.logger.info(`(SEARCH/AION) Renaming indexed page: ${page.path} -> ${page.destinationPath}`)
-    
+
     // Delete old version using original hash
     await this._deleteDocument({
       ...page,
       hash: page.hash // Use original hash for deletion
     })
-    
+
     // Index new version with destination data
     const renamedPage = {
       ...page,
@@ -144,10 +144,10 @@ module.exports = {
    */
   async rebuild() {
     WIKI.logger.info(`(SEARCH/AION) Rebuilding search index...`)
-    
+
     let processed = 0
     let failed = 0
-    
+
     try {
       // Get all published pages
       const pages = await WIKI.models.pages.query()
@@ -174,9 +174,9 @@ module.exports = {
             WIKI.logger.warn(`(SEARCH/AION) Failed to index page ${page.path}: ${err.message}`)
           }
         })
-        
+
         await Promise.all(batchPromises)
-        
+
         // Small delay between batches
         await new Promise(resolve => setTimeout(resolve, 200))
       }
@@ -201,7 +201,7 @@ module.exports = {
     while (attempt < maxAttempts) {
       try {
         attempt++
-        
+
         // Prepare document for AION service
         const wikiDocument = {
           id: page.hash || page.id?.toString(),
@@ -257,17 +257,17 @@ module.exports = {
       } catch (err) {
         const errorMsg = err.response?.data?.detail || err.message || 'Unknown error'
         WIKI.logger.warn(`(SEARCH/AION) Indexing attempt ${attempt}/${maxAttempts} failed for ${page.path}: ${errorMsg}`)
-        
+
         if (attempt >= maxAttempts) {
           if (this.config.logIndexingErrors) {
             WIKI.logger.error(`(SEARCH/AION) Failed to index ${page.path} after ${maxAttempts} attempts`)
             WIKI.logger.error(`(SEARCH/AION) Final error: ${errorMsg}`)
           }
-          
+
           // Don't throw error to prevent breaking Wiki.js operations
           return false
         }
-        
+
         // Exponential backoff delay
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000)
         await new Promise(resolve => setTimeout(resolve, delay))
@@ -287,9 +287,9 @@ module.exports = {
     while (attempt < maxAttempts) {
       try {
         attempt++
-        
+
         const documentId = page.hash || page.id?.toString()
-        
+
         if (!documentId) {
           WIKI.logger.warn(`(SEARCH/AION) Cannot delete document without ID: ${page.path}`)
           return false
@@ -318,16 +318,16 @@ module.exports = {
       } catch (err) {
         const errorMsg = err.response?.data?.detail || err.message || 'Unknown error'
         WIKI.logger.warn(`(SEARCH/AION) Deletion attempt ${attempt}/${maxAttempts} failed for ${page.path}: ${errorMsg}`)
-        
+
         if (attempt >= maxAttempts) {
           if (this.config.logIndexingErrors) {
             WIKI.logger.error(`(SEARCH/AION) Failed to delete ${page.path} after ${maxAttempts} attempts`)
             WIKI.logger.error(`(SEARCH/AION) Final error: ${errorMsg}`)
           }
-          
+
           return false
         }
-        
+
         // Exponential backoff delay
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000)
         await new Promise(resolve => setTimeout(resolve, delay))
@@ -345,11 +345,11 @@ module.exports = {
     if (!date) {
       return new Date().toISOString()
     }
-    
+
     if (date instanceof Date) {
       return date.toISOString()
     }
-    
+
     if (typeof date === 'string') {
       // If already ISO string, return as is
       if (date.includes('T') && date.includes('Z')) {
@@ -362,11 +362,11 @@ module.exports = {
         return new Date().toISOString()
       }
     }
-    
+
     if (typeof date === 'number') {
       return new Date(date).toISOString()
     }
-    
+
     return new Date().toISOString()
   },
 
@@ -383,7 +383,7 @@ module.exports = {
     while (attempt < maxAttempts) {
       try {
         attempt++
-        
+
         // Prepare search request
         const searchRequest = {
           query: query,
@@ -409,35 +409,28 @@ module.exports = {
 
         if (response.status === 200 && response.data) {
           const searchResults = response.data
-          
+
           WIKI.logger.info(`(SEARCH/AION) Semantic search completed: ${searchResults.total_found} results in ${searchResults.processing_time_ms}ms`)
           WIKI.logger.info(`(SEARCH/AION) Strategy: ${searchResults.search_strategy}`)
 
-          // Transform AION results to Wiki.js format
           const wikiResults = searchResults.results.map(result => ({
             id: result.id,
             path: result.path,
             title: result.title,
             description: this._extractDescription(result.content_preview),
             locale: result.metadata.locale || opts.locale || 'en',
-            score: result.relevance_score,
-            // Additional metadata for display
-            _aion_metadata: {
-              chunk_info: result.chunk_info,
-              content_preview: result.content_preview,
-              author: result.metadata.author,
-              updated_at: result.metadata.updated_at
-            }
+            offset: result.chunk_info?.start_offset || result.offset || 0  // <- AGGIUNGI QUESTA RIGA
           }))
 
           return {
             results: wikiResults,
             suggestions: this._generateSuggestions(query, wikiResults),
             totalHits: searchResults.total_found,
-            _aion_info: {
+            // Mappare ai nomi del schema GraphQL
+            aionInfo: {
               strategy: searchResults.search_strategy,
-              processing_time: searchResults.processing_time_ms,
-              service_used: 'aion_semantic'
+              processingTime: searchResults.processing_time_ms,
+              serviceUsed: 'aion_semantic'
             }
           }
         } else {
@@ -447,12 +440,12 @@ module.exports = {
       } catch (err) {
         const errorMsg = err.response?.data?.detail || err.message || 'Unknown error'
         WIKI.logger.warn(`(SEARCH/AION) Semantic search attempt ${attempt}/${maxAttempts} failed: ${errorMsg}`)
-        
+
         if (attempt >= maxAttempts) {
           WIKI.logger.error(`(SEARCH/AION) Semantic search failed after ${maxAttempts} attempts`)
           throw new Error(`AION semantic search failed: ${errorMsg}`)
         }
-        
+
         // Brief delay before retry
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
@@ -466,7 +459,7 @@ module.exports = {
    */
   _extractDescription(content) {
     if (!content) return ''
-    
+
     // Clean markdown and get first sentence
     const cleaned = content
       .replace(/^#+\s*/gm, '') // Remove headers
@@ -474,11 +467,11 @@ module.exports = {
       .replace(/\*([^*]+)\*/g, '$1') // Remove italic
       .replace(/`([^`]+)`/g, '$1') // Remove code
       .trim()
-    
+
     // Get first sentence up to 150 chars
     const firstSentence = cleaned.split(/[.!?]/)[0] || cleaned
-    return firstSentence.length > 150 
-      ? firstSentence.substring(0, 147) + '...' 
+    return firstSentence.length > 150
+      ? firstSentence.substring(0, 147) + '...'
       : firstSentence
   },
 
@@ -490,28 +483,28 @@ module.exports = {
    */
   _generateSuggestions(originalQuery, results) {
     const suggestions = []
-    
+
     // Extract common terms from high-scoring results
     const topResults = results.filter(r => r.score > 0.5).slice(0, 5)
     const commonWords = new Set()
-    
+
     topResults.forEach(result => {
       const words = result.title.toLowerCase()
         .split(/\s+/)
         .filter(word => word.length > 3 && !originalQuery.toLowerCase().includes(word))
       words.forEach(word => commonWords.add(word))
     })
-    
+
     // Generate suggestions from common words
     Array.from(commonWords).slice(0, 3).forEach(word => {
       suggestions.push(`${originalQuery} ${word}`)
     })
-    
+
     return suggestions
   },
   async _fallbackQuery(q, opts) {
     WIKI.logger.debug(`(SEARCH/AION) Using fallback database search`)
-    
+
     const results = await WIKI.models.pages.query()
       .column('pages.id', 'title', 'description', 'path', 'localeCode as locale')
       .withGraphJoined('tags')

@@ -30,26 +30,26 @@ const punctuationRegex = /[!,:;/\\_+\-=()&#@<>$~%^*[\]{}"'|]+|(\.\s)|(\s\.)/ig
 module.exports = class Page extends Model {
   static get tableName() { return 'pages' }
 
-  static get jsonSchema () {
+  static get jsonSchema() {
     return {
       type: 'object',
       required: ['path', 'title'],
 
       properties: {
-        id: {type: 'integer'},
-        path: {type: 'string'},
-        hash: {type: 'string'},
-        title: {type: 'string'},
-        description: {type: 'string'},
-        isPublished: {type: 'boolean'},
-        privateNS: {type: 'string'},
-        publishStartDate: {type: 'string'},
-        publishEndDate: {type: 'string'},
-        content: {type: 'string'},
-        contentType: {type: 'string'},
+        id: { type: 'integer' },
+        path: { type: 'string' },
+        hash: { type: 'string' },
+        title: { type: 'string' },
+        description: { type: 'string' },
+        isPublished: { type: 'boolean' },
+        privateNS: { type: 'string' },
+        publishStartDate: { type: 'string' },
+        publishEndDate: { type: 'string' },
+        content: { type: 'string' },
+        contentType: { type: 'string' },
 
-        createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' }
       }
     }
   }
@@ -171,7 +171,7 @@ module.exports = class Page extends Model {
    *
    * @returns {string} Page Contents with Injected Metadata
    */
-  injectMetadata () {
+  injectMetadata() {
     return pageHelper.injectPageMetadata(this)
   }
 
@@ -191,7 +191,7 @@ module.exports = class Page extends Model {
    * @param {String} contentType Content Type
    * @returns {Object} Parsed Page Metadata with Raw Content
    */
-  static parseMetadata (raw, contentType) {
+  static parseMetadata(raw, contentType) {
     let result
     try {
       switch (contentType) {
@@ -230,6 +230,16 @@ module.exports = class Page extends Model {
     return {
       content: raw
     }
+  }
+
+
+  static async searchAION(query, opts = {}) {
+    const searchEngine = WIKI.models.searchEngines.find(engine => engine.key === 'aion')
+    if (!searchEngine || !searchEngine.isEnabled) {
+      throw new Error('AION search engine not available')
+    }
+
+    return await searchEngine.query(query, opts)
   }
 
   /**
@@ -572,7 +582,7 @@ module.exports = class Page extends Model {
           })
         }
 
-      // -> HTML => Markdown
+        // -> HTML => Markdown
       } else if (sourceContentType === 'html' && targetContentType === 'markdown') {
         const td = new TurndownService({
           bulletListMarker: '-',
@@ -622,7 +632,7 @@ module.exports = class Page extends Model {
         })
 
         convertedContent = td.turndown(ogPage.content)
-      // -> Unsupported
+        // -> Unsupported
       } else {
         throw new Error('Unsupported source / destination content types combination.')
       }
@@ -847,7 +857,7 @@ module.exports = class Page extends Model {
    * @param {string} opts.mode - Page Update mode (create, move, delete)
    * @returns {Promise} Promise with no value
    */
-  static async reconnectLinks (opts) {
+  static async reconnectLinks(opts) {
     const pageHref = `/${opts.locale}/${opts.path}`
     let replaceArgs = {
       from: '',
@@ -1138,7 +1148,7 @@ module.exports = class Page extends Model {
       .where({
         localeCode: sourceLocale
       })
-      .whereNotExists(function() {
+      .whereNotExists(function () {
         this.select('id').from('pages AS pagesm').where('pagesm.localeCode', targetLocale).andWhereRaw('pagesm.path = pages.path')
       })
   }
@@ -1152,7 +1162,7 @@ module.exports = class Page extends Model {
   static cleanHTML(rawHTML = '') {
     let data = striptags(rawHTML || '', [], ' ')
       .replace(emojiRegex(), '')
-      // .replace(htmlEntitiesRegex, '')
+    // .replace(htmlEntitiesRegex, '')
     return he.decode(data)
       .replace(punctuationRegex, ' ')
       .replace(/(\r\n|\n|\r)/gm, ' ')

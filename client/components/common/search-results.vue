@@ -23,8 +23,13 @@
                 img(src='/_assets/svg/icon-selective-highlighting.svg')
               v-list-item-content
                 v-list-item-title(v-text='item.title')
-                v-list-item-subtitle.caption(v-text='item.description')
+                v-list-item-subtitle.caption
+                  // Usare aionMetadata invece di _aion_metadata
+                  span(v-if='item.aionMetadata && item.aionMetadata.contentPreview' v-html='getHighlightedPreview(item)')
+                  span(v-else v-text='item.description')
                 .caption.grey--text(v-text='item.path')
+                // Mostrare score se disponibile
+                .caption.blue--text(v-if='item.score') Score: {{Math.round(item.score * 100)}}%
               v-list-item-action
                 v-chip(label, outlined) {{item.locale.toUpperCase()}}
             v-divider(v-if='idx < results.length - 1')
@@ -136,11 +141,24 @@ export default {
       this.search = term
     },
     goToPage(item) {
-      window.location.assign(`/${item.locale}/${item.path}`)
-    },
-    goToPageInNewTab(item) {
-      window.open(`/${item.locale}/${item.path}`, '_blank')
+    let url = `/${item.locale}/${item.path}`
+    
+    if (item.offset && item.offset > 0) {
+      url += `#offset-${item.offset}`
     }
+    
+    window.location.assign(url)
+  },
+
+  goToPageInNewTab(item) {
+    let url = `/${item.locale}/${item.path}`
+    
+    if (item.offset && item.offset > 0) {
+      url += `#offset-${item.offset}`
+    }
+    
+    window.open(url, '_blank')
+  }
   },
   apollo: {
     response: {

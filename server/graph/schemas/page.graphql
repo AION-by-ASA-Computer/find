@@ -258,6 +258,8 @@ type PageSearchResponse {
   results: [PageSearchResult]!
   suggestions: [String]!
   totalHits: Int!
+  # Aggiungere questi campi per AION
+  aionInfo: AionSearchInfo
 }
 
 type PageSearchResult {
@@ -266,6 +268,28 @@ type PageSearchResult {
   description: String!
   path: String!
   locale: String!
+  offset: Int  
+}
+
+# Nuovi tipi per supportare AION
+type AionSearchInfo {
+  strategy: String
+  processingTime: Int
+  serviceUsed: String
+}
+
+type AionMetadata {
+  chunkInfo: AionChunkInfo
+  contentPreview: String
+  author: String
+  updatedAt: String
+  endOffset: Int
+}
+
+type AionChunkInfo {
+  startOffset: Int
+  endOffset: Int
+  chunkIndex: Int
 }
 
 type PageListItem {

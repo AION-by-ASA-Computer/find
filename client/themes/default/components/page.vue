@@ -621,18 +621,61 @@ export default {
       theme: this.$vuetify.theme.dark ? `dark` : `default`
     })
 
-    // -> Handle anchor scrolling
-    if (window.location.hash && window.location.hash.length > 1) {
-      if (document.readyState === 'complete') {
-        this.$nextTick(() => {
-          this.$vuetify.goTo(decodeURIComponent(window.location.hash), this.scrollOpts)
-        })
-      } else {
-        window.addEventListener('load', () => {
-          this.$vuetify.goTo(decodeURIComponent(window.location.hash), this.scrollOpts)
-        })
-      }
+    this.$store.set('page/id', this.pageId)
+  this.$store.set('page/authorId', this.authorId)
+  this.$store.set('page/createdAt', this.createdAt)
+  this.$store.set('page/description', this.description)
+  this.$store.set('page/isPrivate', this.isPrivate)
+  this.$store.set('page/isPublished', this.isPublished)
+  this.$store.set('page/publishEndDate', this.publishEndDate)
+  this.$store.set('page/publishStartDate', this.publishStartDate)
+  this.$store.set('page/tags', this.tags)
+  this.$store.set('page/title', this.title)
+  this.$store.set('page/updatedAt', this.updatedAt)
+
+  this.$store.set('page/mode', 'view')
+
+  if (this.navMode === 'NONE') {
+    this.$store.set('site/navigationMode', 'none')
+  } else {
+    this.$store.set('site/navigationMode', this.navMode.toLowerCase())
+  }
+
+  this.$nextTick(() => {
+    Prism.highlightAllUnder(this.$refs.container)
+    this.navShown = this.$vuetify.breakpoint.mdAndUp && this.navMode !== 'NONE'
+    this.$store.set('page/render', this.$refs.container.innerHTML)
+    this.handleSideNavVisibility()
+    window.addEventListener('resize', this.handleSideNavVisibility)
+  })
+
+  // ====================================
+  // MODIFICA: Handle anchor scrolling con supporto per offset
+  // ====================================
+  if (window.location.hash && window.location.hash.length > 1) {
+    if (document.readyState === 'complete') {
+      this.$nextTick(() => {
+        this.handleHashNavigation()
+      })
+    } else {
+      window.addEventListener('load', () => {
+        this.handleHashNavigation()
+      })
     }
+  }
+
+  // -> Handle anchor links within the page contents
+  this.$nextTick(() => {
+    this.$refs.container.querySelectorAll(`a[href^="#"], a[href^="${window.location.href.replace(window.location.hash, '')}#"]`).forEach(el => {
+      el.onclick = ev => {
+        ev.preventDefault()
+        ev.stopPropagation()
+        this.handleHashNavigation(decodeURIComponent(ev.currentTarget.hash))
+      }
+    })
+
+    window.boot.notify('page-ready')
+  })
 
     // -> Handle anchor links within the page contents
     this.$nextTick(() => {
@@ -703,8 +746,137 @@ export default {
       if (focusNewComment) {
         document.querySelector('#discussion-new').focus()
       }
+    },
+    handleHashNavigation(hash = null) {
+    const targetHash = hash || window.location.hash
+    
+    if (!targetHash || targetHash.length <= 1) {
+      return
     }
+
+    // Gestire offset AION nel formato #offset-XXXX o #offset-XXXX-YYYY
+    if (targetHash.startsWith('#offset-')) {
+      this.scrollToOffset(targetHash)
+    } else {
+      // Gestione normale degli anchor (comportamento esistente)
+      this.$vuetify.goTo(decodeURIComponent(targetHash), this.scrollOpts)
+    }
+  },
+  scrollToOffset(hash) {
+    try {
+      // Estrarre offset dal hash (#offset-1234 o #offset-1234-5678)
+      const offsetData = hash.replace('#offset-', '').split('-')
+      const startOffset = parseInt(offsetData[0])
+      const endOffset = offsetData[1] ? parseInt(offsetData[1]) : null
+      
+      if (isNaN(startOffset) || startOffset < 0) {
+        console.warn('Invalid offset in hash:', hash)
+        return
+      }
+
+      // Trovare l'elemento contenente il testo della pagina
+      const contentContainer = this.$refs.container
+      if (!contentContainer) {
+        console.warn('Content container not found')
+        return
+      }
+
+      // Trovare la posizione del testo basata sull'offset
+      const targetElement = this.findElementByOffset(contentContainer, startOffset, endOffset)
+      
+      if (targetElement) {
+        // Scroll all'elemento trovato
+        this.$vuetify.goTo(targetElement, {
+          ...this.scrollOpts,
+          offset: -100 // Offset per non nascondere il testo sotto l'header
+        })
+
+        // Evidenziare il testo trovato
+        this.highlightFoundText(targetElement, startOffset, endOffset)
+      } else {
+        console.warn('Could not find text at offset:', startOffset)
+        // Fallback: scroll in cima alla pagina
+        this.$vuetify.goTo(contentContainer, this.scrollOpts)
+      }
+
+    } catch (error) {
+      console.error('Error handling offset navigation:', error)
+      // Fallback: scroll in cima alla pagina
+      this.$vuetify.goTo(this.$refs.container, this.scrollOpts)
+    }
+  },
+  findElementByOffset(container, startOffset, endOffset = null) {
+    let currentOffset = 0
+    let targetElement = null
+    
+    // Walker per attraversare tutti i nodi di testo
+    const walker = document.createTreeWalker(
+      container,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: function(node) {
+          // Saltare nodi vuoti o solo whitespace
+          if (!node.textContent.trim()) {
+            return NodeFilter.FILTER_REJECT
+          }
+          return NodeFilter.FILTER_ACCEPT
+        }
+      },
+      false
+    )
+
+    let node
+    while (node = walker.nextNode()) {
+      const nodeLength = node.textContent.length
+      
+      // Controllare se l'offset si trova in questo nodo
+      if (currentOffset + nodeLength > startOffset) {
+        targetElement = node.parentElement
+        
+        // Se abbiamo trovato l'elemento, possiamo fermarci
+        break
+      }
+      
+      currentOffset += nodeLength
+    }
+
+    return targetElement
+  },highlightFoundText(element, startOffset, endOffset = null) {
+    if (!element) return
+
+    // Aggiungere classe CSS per evidenziazione
+    element.classList.add('aion-search-highlight')
+    
+    // Aggiungere uno stile inline temporaneo per l'evidenziazione
+    const originalStyle = element.style.cssText
+    element.style.cssText += `
+      background-color: #ffeb3b !important;
+      padding: 2px 4px !important;
+      border-radius: 3px !important;
+      box-shadow: 0 0 0 2px rgba(255, 235, 59, 0.3) !important;
+      transition: all 0.3s ease !important;
+    `
+
+    // Rimuovere l'evidenziazione dopo 5 secondi
+    setTimeout(() => {
+      element.classList.remove('aion-search-highlight')
+      element.style.cssText = originalStyle
+    }, 5000)
+
+    // Aggiungere un piccolo effetto di "pulsazione"
+    setTimeout(() => {
+      element.style.transform = 'scale(1.02)'
+      setTimeout(() => {
+        element.style.transform = 'scale(1)'
+      }, 200)
+    }, 100)
   }
+    
+
+ 
+  }
+
+  
 }
 </script>
 
@@ -786,6 +958,69 @@ export default {
         border-bottom-right-radius: 5px;
       }
     }
+  }
+}
+
+
+.aion-search-highlight {
+  position: relative;
+  scroll-margin-top: 100px; /* Assicura che l'elemento non sia nascosto dall'header */
+}
+
+/* Animazione di evidenziazione */
+@keyframes aion-highlight-pulse {
+  0% {
+    background-color: #ffeb3b;
+    box-shadow: 0 0 0 2px rgba(255, 235, 59, 0.6);
+  }
+  50% {
+    background-color: #fff176;
+    box-shadow: 0 0 0 4px rgba(255, 235, 59, 0.4);
+  }
+  100% {
+    background-color: #ffeb3b;
+    box-shadow: 0 0 0 2px rgba(255, 235, 59, 0.6);
+  }
+}
+
+/* Classe per animazione di fade-out */
+.aion-highlight-fadeout {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: all 1s ease-out !important;
+}
+
+/* Miglioramenti per diversi tipi di elementi */
+.aion-search-highlight h1,
+.aion-search-highlight h2,
+.aion-search-highlight h3,
+.aion-search-highlight h4,
+.aion-search-highlight h5,
+.aion-search-highlight h6 {
+  scroll-margin-top: 120px;
+}
+
+.aion-search-highlight p,
+.aion-search-highlight li,
+.aion-search-highlight td {
+  scroll-margin-top: 80px;
+}
+
+/* Assicurarsi che il contenuto sia sempre visibile */
+.page-col-content {
+  position: relative;
+}
+
+/* Dark mode support */
+.theme--dark .aion-search-highlight {
+  background-color: #f57f17 !important;
+  box-shadow: 0 0 0 2px rgba(245, 127, 23, 0.3) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aion-search-highlight {
+    transition: none !important;
+    animation: none !important;
   }
 }
 
