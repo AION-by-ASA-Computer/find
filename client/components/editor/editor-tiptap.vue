@@ -3,6 +3,8 @@
     // Toolbar superiore stile Word/Markdown
     .editor-toolbar
       .toolbar-section
+
+      
         .toolbar-group
           v-btn(icon, small, @click='toggleBold', :color='editor && editor.isActive("bold") ? "primary" : ""')
             v-icon mdi-format-bold
@@ -240,7 +242,8 @@
           v-icon(size='18') mdi-plus
 
         // Editor content
-        .editor-content(ref='editorElement')
+        editor-content.editor-content(:editor='editor')
+
 
     // Slash Commands Modal
     v-dialog(v-model='slashMenuOpen', max-width='400', :style='slashMenuDialogStyle')
@@ -377,6 +380,9 @@ import Subscript from '@tiptap/extension-subscript'
 
 /* global siteLangs */
 
+
+
+
 export default {
   components: {
     EditorContent
@@ -424,6 +430,10 @@ export default {
       aiPrompt: '',
       aiGeneratedText: '',
       aiGenerating: false,
+
+      editorMode: 'visual', // 'visual' or 'markdown'
+      markdownContent: '',
+      showMarkdownPreview: false,
       
       // AI Panel for text selection
       aiPanelOpen: false,
@@ -624,7 +634,6 @@ export default {
   methods: {
     initializeEditor() {
       this.editor = new Editor({
-        element: this.$refs.editorElement,
         extensions: [
           StarterKit.configure({
             horizontalRule: false, // Disabilita dal StarterKit per usare la nostra configurazione
@@ -1392,6 +1401,7 @@ export default {
       this.aiCustomPrompt = ''
       this.aiActionLoading = null
     },
+    
 
     aiQuickAction(action) {
       if (!this.selectedText) return
@@ -1455,6 +1465,9 @@ export default {
         })
       }, 2000)
     },
+
+
+    
 
     replaceSelectedText(newText) {
       if (!this.editor) return

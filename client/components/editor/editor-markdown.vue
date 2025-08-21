@@ -110,6 +110,19 @@
               v-btn.animated.fadeIn.wait-p2s(icon, tile, v-on='on', @click='previewShown = !previewShown').mx-0
                 v-icon mdi-book-open-outline
             span {{$t('editor:markup.togglePreviewPane')}}
+
+          v-divider(vertical)
+            .toolbar-group.ai-group
+              v-tooltip(bottom, color='purple')
+                template(v-slot:activator='{ on }')
+                  v-btn.animated.fadeIn.wait-p12s(icon, tile, v-on='on', @click='showWriteWithAI').mx-0
+                    v-icon(color='purple') mdi-brain
+                span Write with AI
+              v-tooltip(bottom, color='purple')
+                template(v-slot:activator='{ on }')
+                  v-btn.animated.fadeIn.wait-p13s(icon, tile, v-on='on', @click='openAIPanel', :disabled='!hasTextSelection').mx-0
+                    v-icon(color='purple') mdi-robot
+                span AI Tools for Selection
     .editor-markdown-main
       .editor-markdown-sidebar
         v-tooltip(right, color='teal')

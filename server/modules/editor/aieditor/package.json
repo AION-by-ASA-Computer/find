@@ -1,0 +1,15 @@
+{
+  "name": "wiki-aieditor-module",
+  "version": "1.0.0",
+  "description": "AI-powered editor module for Wiki.js",
+  "main": "index.js",
+  "dependencies": {
+    "aieditor": "^1.3.0"
+  },
+  "peerDependencies": {
+    "vue": "^2.6.0"
+  },
+  "keywords": ["aieditor", "ai", "editor", "wiki"],
+  "author": "Wiki.js Community",
+  "license": "MIT"
+}

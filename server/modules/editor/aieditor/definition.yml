@@ -1,0 +1,44 @@
+key: aieditor
+title: AI Editor
+description: Next-generation rich text editor powered by AI with advanced writing assistance
+contentType: html
+author: community
+props:
+  aiProvider:
+    type: String
+    title: AI Provider
+    hint: AI service provider for enhanced features
+    default: openai
+    order: 1
+    enum:
+      - openai
+      - anthropic
+      - gemini
+      - custom
+  aiApiKey:
+    type: String
+    title: AI API Key
+    hint: API key for AI services (leave empty to disable AI features)
+    default: ""
+    order: 2
+  placeholder:
+    type: String
+    title: Placeholder Text
+    hint: Text to show when editor is empty
+    default: "Start writing with AI assistance..."
+    order: 3
+  enableAIMenu:
+    type: Boolean
+    title: Enable AI Menu
+    hint: Show AI-powered options in the editor toolbar
+    default: true
+    order: 4
+  theme:
+    type: String
+    title: Theme
+    hint: Editor theme appearance
+    default: light
+    order: 5
+    enum:
+      - light
+      - dark
