@@ -23,13 +23,13 @@
                 img(src='/_assets/svg/icon-selective-highlighting.svg')
               v-list-item-content
                 v-list-item-title(v-text='item.title')
-                v-list-item-subtitle.caption
-                  // Usare aionMetadata invece di _aion_metadata
-                  span(v-if='item.aionMetadata && item.aionMetadata.contentPreview' v-html='getHighlightedPreview(item)')
-                  span(v-else v-text='item.description')
+                v-list-item-subtitle.caption(v-text='item.description')
                 .caption.grey--text(v-text='item.path')
-                // Mostrare score se disponibile
-                .caption.blue--text(v-if='item.score') Score: {{Math.round(item.score * 100)}}%
+                // DEBUG: Mostrare l'offset per verificare
+                .caption.blue--text(v-if='item.offset && item.offset > 0') 
+                  strong Offset: {{item.offset}}
+                .caption.orange--text(v-else) 
+                  strong No offset available
               v-list-item-action
                 v-chip(label, outlined) {{item.locale.toUpperCase()}}
             v-divider(v-if='idx < results.length - 1')
@@ -138,27 +138,61 @@ export default {
   },
   methods: {
     setSearchTerm(term) {
+      console.log('setSearchTerm called with:', term)
       this.search = term
     },
-    goToPage(item) {
-    let url = `/${item.locale}/${item.path}`
-    
-    if (item.offset && item.offset > 0) {
-      url += `#offset-${item.offset}`
-    }
-    
-    window.location.assign(url)
-  },
 
-  goToPageInNewTab(item) {
-    let url = `/${item.locale}/${item.path}`
-    
-    if (item.offset && item.offset > 0) {
-      url += `#offset-${item.offset}`
+    goToPage(item) {
+      console.log('=== DEBUG: goToPage START ===')
+      console.log('goToPage called with item:', item)
+      console.log('item.offset:', item.offset)
+
+      // CHIUDERE IL PANNELLO DI RICERCA
+      console.log('Closing search panel...')
+      this.search = '' // Pulisce la ricerca
+      this.$store.set('site/searchIsFocused', false) // Chiude il focus
+
+      let url = `/${item.locale}/${item.path}`
+      console.log('Base URL:', url)
+
+      if (item.offset && item.offset > 0) {
+        url += `#offset-${item.offset}`
+        console.log('URL with offset:', url)
+      } else {
+        console.log('No offset found or offset is 0')
+      }
+
+      console.log('Final URL:', url)
+      console.log('About to navigate...')
+
+      // Piccolo delay per permettere alla UI di aggiornare
+      setTimeout(() => {
+        window.location.assign(url)
+      }, 100)
+
+      console.log('=== DEBUG: goToPage END ===')
+    },
+
+    goToPageInNewTab(item) {
+      console.log('goToPageInNewTab called with:', item)
+
+      // Chiudere il pannello anche per i nuovi tab
+      this.search = ''
+      this.$store.set('site/searchIsFocused', false)
+
+      let url = `/${item.locale}/${item.path}`
+
+      if (item.offset && item.offset > 0) {
+        url += `#offset-${item.offset}`
+      }
+
+      console.log('Opening in new tab:', url)
+      window.open(url, '_blank')
+    },
+
+    getHighlightedPreview(item) {
+      return item.description || ''
     }
-    
-    window.open(url, '_blank')
-  }
   },
   apollo: {
     response: {
@@ -178,7 +212,7 @@ export default {
         this.pagination = 1
       },
       update: (data) => _.get(data, 'pages.search', {}),
-      watchLoading (isLoading) {
+      watchLoading(isLoading) {
         this.searchIsLoading = isLoading
       }
     }
@@ -194,7 +228,7 @@ export default {
   overflow-y: auto;
   width: 100%;
   height: calc(100% - 64px);
-  background-color: rgba(0,0,0,.9);
+  background-color: rgba(0, 0, 0, .9);
   z-index: 100;
   text-align: center;
   animation: searchResultsReveal .6s ease;
@@ -259,11 +293,12 @@ export default {
 
 @keyframes searchResultsReveal {
   0% {
-    background-color: rgba(0,0,0,0);
+    background-color: rgba(0, 0, 0, 0);
     padding-top: 32px;
   }
+
   100% {
-    background-color: rgba(0,0,0,.9);
+    background-color: rgba(0, 0, 0, .9);
     padding-top: 0;
   }
 }

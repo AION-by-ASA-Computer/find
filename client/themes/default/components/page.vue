@@ -529,10 +529,10 @@ export default {
     commentsPerms: get('page/effectivePermissions@comments'),
     editShortcutsObj: get('page/editShortcuts'),
     rating: {
-      get () {
+      get() {
         return 3.5
       },
-      set (val) {
+      set(val) {
 
       }
     },
@@ -545,18 +545,18 @@ export default {
         return result
       }, []))
     },
-    pageUrl () { return window.location.href },
-    upBtnPosition () {
+    pageUrl() { return window.location.href },
+    upBtnPosition() {
       if (this.$vuetify.breakpoint.mdAndUp) {
         return this.$vuetify.rtl ? `right: 235px;` : `left: 235px;`
       } else {
         return this.$vuetify.rtl ? `right: 65px;` : `left: 65px;`
       }
     },
-    sidebarDecoded () {
+    sidebarDecoded() {
       return JSON.parse(Buffer.from(this.sidebar, 'base64').toString())
     },
-    tocDecoded () {
+    tocDecoded() {
       return JSON.parse(Buffer.from(this.toc, 'base64').toString())
     },
     tocPosition: get('site/tocPosition'),
@@ -566,12 +566,12 @@ export default {
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
-    hasAnyPagePermissions () {
+    hasAnyPagePermissions() {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
     printView: sync('site/printView'),
-    editMenuExternalUrl () {
+    editMenuExternalUrl() {
       if (this.editShortcutsObj.editMenuBar && this.editShortcutsObj.editMenuExternalBtn) {
         return this.editShortcutsObj.editMenuExternalUrl.replace('{filename}', this.filename)
       } else {
@@ -601,107 +601,120 @@ export default {
 
     this.$store.set('page/mode', 'view')
   },
-  mounted () {
-    if (this.$vuetify.theme.dark) {
-      this.scrollStyle.bar.background = '#424242'
-    }
-
-    // -> Check side navigation visibility
-    this.handleSideNavVisibility()
-    window.addEventListener('resize', _.debounce(() => {
-      this.handleSideNavVisibility()
-    }, 500))
-
-    // -> Highlight Code Blocks
-    Prism.highlightAllUnder(this.$refs.container)
-
-    // -> Render Mermaid diagrams
-    mermaid.mermaidAPI.initialize({
-      startOnLoad: true,
-      theme: this.$vuetify.theme.dark ? `dark` : `default`
-    })
+  mounted() {
+    console.log('=== PAGE COMPONENT mounted() START ===')
 
     this.$store.set('page/id', this.pageId)
-  this.$store.set('page/authorId', this.authorId)
-  this.$store.set('page/createdAt', this.createdAt)
-  this.$store.set('page/description', this.description)
-  this.$store.set('page/isPrivate', this.isPrivate)
-  this.$store.set('page/isPublished', this.isPublished)
-  this.$store.set('page/publishEndDate', this.publishEndDate)
-  this.$store.set('page/publishStartDate', this.publishStartDate)
-  this.$store.set('page/tags', this.tags)
-  this.$store.set('page/title', this.title)
-  this.$store.set('page/updatedAt', this.updatedAt)
+    this.$store.set('page/authorId', this.authorId)
+    this.$store.set('page/createdAt', this.createdAt)
+    this.$store.set('page/description', this.description)
+    this.$store.set('page/isPublished', this.isPublished)
+    this.$store.set('page/publishEndDate', this.publishEndDate)
+    this.$store.set('page/publishStartDate', this.publishStartDate)
+    this.$store.set('page/tags', this.tags)
+    this.$store.set('page/title', this.title)
+    this.$store.set('page/updatedAt', this.updatedAt)
+    this.$store.set('page/mode', 'view')
 
-  this.$store.set('page/mode', 'view')
+    console.log('Store values set successfully')
 
-  if (this.navMode === 'NONE') {
-    this.$store.set('site/navigationMode', 'none')
-  } else {
-    this.$store.set('site/navigationMode', this.navMode.toLowerCase())
-  }
+    // Funzione di test globale per il debugging
+    window.handleTestScroll = (offset) => {
+      console.log('=== TEST SCROLL FUNCTION CALLED ===')
+      console.log('Test offset:', offset)
 
-  this.$nextTick(() => {
-    Prism.highlightAllUnder(this.$refs.container)
-    this.navShown = this.$vuetify.breakpoint.mdAndUp && this.navMode !== 'NONE'
-    this.$store.set('page/render', this.$refs.container.innerHTML)
-    this.handleSideNavVisibility()
-    window.addEventListener('resize', this.handleSideNavVisibility)
-  })
+      const scrollPos = Math.max(0, (offset / 80) * 24 - 100)
+      console.log('Calculated scroll position:', scrollPos)
 
-  // ====================================
-  // MODIFICA: Handle anchor scrolling con supporto per offset
-  // ====================================
-  if (window.location.hash && window.location.hash.length > 1) {
-    if (document.readyState === 'complete') {
-      this.$nextTick(() => {
-        this.handleHashNavigation()
+      window.scrollTo({
+        top: scrollPos,
+        behavior: 'smooth'
       })
-    } else {
-      window.addEventListener('load', () => {
-        this.handleHashNavigation()
-      })
+
+      console.log('Scroll executed')
     }
-  }
 
-  // -> Handle anchor links within the page contents
-  this.$nextTick(() => {
-    this.$refs.container.querySelectorAll(`a[href^="#"], a[href^="${window.location.href.replace(window.location.hash, '')}#"]`).forEach(el => {
-      el.onclick = ev => {
-        ev.preventDefault()
-        ev.stopPropagation()
-        this.handleHashNavigation(decodeURIComponent(ev.currentTarget.hash))
+    // Debug hash detection
+    console.log('Current URL:', window.location.href)
+    console.log('Current hash:', window.location.hash)
+    console.log('Document ready state:', document.readyState)
+
+    this.$nextTick(() => {
+      console.log('$nextTick executed')
+      Prism.highlightAllUnder(this.$refs.container)
+      this.navShown = this.$vuetify.breakpoint.mdAndUp && this.navMode !== 'NONE'
+      this.handleSideNavVisibility()
+      window.addEventListener('resize', this.handleSideNavVisibility)
+
+      console.log('Basic setup complete')
+    })
+
+    // HASH DETECTION CON DEBUG ESTESO
+    const currentHash = window.location.hash
+    console.log('Checking for hash:', currentHash)
+
+    if (currentHash && currentHash.length > 1) {
+      console.log('Hash detected:', currentHash)
+      console.log('Hash starts with #offset-?', currentHash.startsWith('#offset-'))
+
+      const handleHashWithDelay = () => {
+        console.log('handleHashWithDelay called')
+        console.log('Document ready state now:', document.readyState)
+        console.log('Calling handleHashNavigation...')
+        this.handleHashNavigation()
+      }
+
+      if (document.readyState === 'complete') {
+        console.log('Document already complete, setting timeout')
+        setTimeout(handleHashWithDelay, 2000)
+      } else {
+        console.log('Document not complete, adding load listener')
+        window.addEventListener('load', () => {
+          console.log('Load event fired')
+          setTimeout(handleHashWithDelay, 2000)
+        })
+      }
+    } else {
+      console.log('No hash found')
+    }
+
+    // Hash change listener per debug
+    window.addEventListener('hashchange', () => {
+      console.log('Hash changed to:', window.location.hash)
+      if (window.location.hash.startsWith('#offset-')) {
+        console.log('Offset hash detected in hashchange event')
+        this.handleHashNavigation()
       }
     })
 
-    window.boot.notify('page-ready')
-  })
-
-    // -> Handle anchor links within the page contents
     this.$nextTick(() => {
       this.$refs.container.querySelectorAll(`a[href^="#"], a[href^="${window.location.href.replace(window.location.hash, '')}#"]`).forEach(el => {
         el.onclick = ev => {
+          console.log('Internal anchor clicked:', ev.currentTarget.hash)
           ev.preventDefault()
           ev.stopPropagation()
-          this.$vuetify.goTo(decodeURIComponent(ev.currentTarget.hash), this.scrollOpts)
+          this.handleHashNavigation(decodeURIComponent(ev.currentTarget.hash))
         }
       })
 
       window.boot.notify('page-ready')
+      console.log('Page ready notification sent')
     })
+
+    console.log('=== PAGE COMPONENT mounted() END ===')
   },
   methods: {
-    goHome () {
+    goHome() {
       window.location.assign('/')
     },
-    toggleNavigation () {
+    toggleNavigation() {
       this.navOpen = !this.navOpen
     },
-    upBtnScroll () {
+    upBtnScroll() {
       const scrollOffset = window.pageYOffset || document.documentElement.scrollTop
       this.upBtnShown = scrollOffset > window.innerHeight * 0.33
     },
-    print () {
+    print() {
       if (this.printView) {
         this.printView = false
       } else {
@@ -711,28 +724,28 @@ export default {
         })
       }
     },
-    pageEdit () {
+    pageEdit() {
       this.$root.$emit('pageEdit')
     },
-    pageHistory () {
+    pageHistory() {
       this.$root.$emit('pageHistory')
     },
-    pageSource () {
+    pageSource() {
       this.$root.$emit('pageSource')
     },
-    pageConvert () {
+    pageConvert() {
       this.$root.$emit('pageConvert')
     },
-    pageDuplicate () {
+    pageDuplicate() {
       this.$root.$emit('pageDuplicate')
     },
-    pageMove () {
+    pageMove() {
       this.$root.$emit('pageMove')
     },
-    pageDelete () {
+    pageDelete() {
       this.$root.$emit('pageDelete')
     },
-    handleSideNavVisibility () {
+    handleSideNavVisibility() {
       if (window.innerWidth === this.winWidth) { return }
       this.winWidth = window.innerWidth
       if (this.$vuetify.breakpoint.mdAndUp) {
@@ -741,157 +754,325 @@ export default {
         this.navShown = false
       }
     },
-    goToComments (focusNewComment = false) {
+    goToComments(focusNewComment = false) {
       this.$vuetify.goTo('#discussion', this.scrollOpts)
       if (focusNewComment) {
         document.querySelector('#discussion-new').focus()
       }
     },
-    handleHashNavigation(hash = null) {
-    const targetHash = hash || window.location.hash
-    
-    if (!targetHash || targetHash.length <= 1) {
-      return
-    }
 
-    // Gestire offset AION nel formato #offset-XXXX o #offset-XXXX-YYYY
-    if (targetHash.startsWith('#offset-')) {
-      this.scrollToOffset(targetHash)
-    } else {
-      // Gestione normale degli anchor (comportamento esistente)
-      this.$vuetify.goTo(decodeURIComponent(targetHash), this.scrollOpts)
-    }
-  },
-  scrollToOffset(hash) {
-    try {
-      // Estrarre offset dal hash (#offset-1234 o #offset-1234-5678)
-      const offsetData = hash.replace('#offset-', '').split('-')
-      const startOffset = parseInt(offsetData[0])
-      const endOffset = offsetData[1] ? parseInt(offsetData[1]) : null
-      
-      if (isNaN(startOffset) || startOffset < 0) {
-        console.warn('Invalid offset in hash:', hash)
-        return
-      }
 
-      // Trovare l'elemento contenente il testo della pagina
-      const contentContainer = this.$refs.container
-      if (!contentContainer) {
-        console.warn('Content container not found')
-        return
-      }
+    // NUOVO METODO: Validazione offset
+    validateOffset(hash) {
+      console.log('=== OFFSET VALIDATION START ===')
 
-      // Trovare la posizione del testo basata sull'offset
-      const targetElement = this.findElementByOffset(contentContainer, startOffset, endOffset)
-      
-      if (targetElement) {
-        // Scroll all'elemento trovato
-        this.$vuetify.goTo(targetElement, {
-          ...this.scrollOpts,
-          offset: -100 // Offset per non nascondere il testo sotto l'header
-        })
+      try {
+        const offsetStr = hash.replace('#offset-', '').split('-')[0]
+        const targetOffset = parseInt(offsetStr)
 
-        // Evidenziare il testo trovato
-        this.highlightFoundText(targetElement, startOffset, endOffset)
-      } else {
-        console.warn('Could not find text at offset:', startOffset)
-        // Fallback: scroll in cima alla pagina
-        this.$vuetify.goTo(contentContainer, this.scrollOpts)
-      }
-
-    } catch (error) {
-      console.error('Error handling offset navigation:', error)
-      // Fallback: scroll in cima alla pagina
-      this.$vuetify.goTo(this.$refs.container, this.scrollOpts)
-    }
-  },
-  findElementByOffset(container, startOffset, endOffset = null) {
-    let currentOffset = 0
-    let targetElement = null
-    
-    // Walker per attraversare tutti i nodi di testo
-    const walker = document.createTreeWalker(
-      container,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: function(node) {
-          // Saltare nodi vuoti o solo whitespace
-          if (!node.textContent.trim()) {
-            return NodeFilter.FILTER_REJECT
-          }
-          return NodeFilter.FILTER_ACCEPT
+        const container = this.$refs.container
+        if (!container) {
+          console.warn('No container for validation')
+          return false
         }
-      },
-      false
-    )
 
-    let node
-    while (node = walker.nextNode()) {
-      const nodeLength = node.textContent.length
-      
-      // Controllare se l'offset si trova in questo nodo
-      if (currentOffset + nodeLength > startOffset) {
-        targetElement = node.parentElement
-        
-        // Se abbiamo trovato l'elemento, possiamo fermarci
-        break
+        // Ottenere il testo completo
+        const fullText = container.innerText || container.textContent
+        console.log('Full text length:', fullText.length)
+        console.log('Target offset:', targetOffset)
+
+        if (targetOffset >= fullText.length) {
+          console.warn('Offset exceeds text length')
+          return false
+        }
+
+        // Estrarre il testo intorno all'offset per vedere se ha senso
+        const beforeText = fullText.substring(Math.max(0, targetOffset - 100), targetOffset)
+        const atText = fullText.substring(targetOffset, targetOffset + 100)
+
+        console.log('=== OFFSET CONTENT ANALYSIS ===')
+        console.log('Text BEFORE offset:')
+        console.log('"' + beforeText + '"')
+        console.log('Text AT offset:')
+        console.log('"' + atText + '"')
+
+        // Verifica se l'offset cade in mezzo a una parola (potrebbe essere impreciso)
+        const charAtOffset = fullText.charAt(targetOffset)
+        const charBefore = fullText.charAt(targetOffset - 1)
+
+        console.log('Character at offset:', `"${charAtOffset}"`)
+        console.log('Character before:', `"${charBefore}"`)
+
+        // Se cade nel mezzo di una parola, potrebbe essere impreciso
+        if (charAtOffset.match(/[a-zA-Z]/) && charBefore.match(/[a-zA-Z]/)) {
+          console.log('WARNING: Offset falls in the middle of a word')
+        }
+
+        return true
+
+      } catch (error) {
+        console.error('Error in offset validation:', error)
+        return false
       }
-      
-      currentOffset += nodeLength
-    }
+    },
 
-    return targetElement
-  },highlightFoundText(element, startOffset, endOffset = null) {
-    if (!element) return
+    handleHashNavigation(hash = null) {
+      console.log('=== handleHashNavigation START ===')
+      const targetHash = hash || window.location.hash
+      console.log('handleHashNavigation called with hash:', targetHash)
 
-    // Aggiungere classe CSS per evidenziazione
-    element.classList.add('aion-search-highlight')
-    
-    // Aggiungere uno stile inline temporaneo per l'evidenziazione
-    const originalStyle = element.style.cssText
-    element.style.cssText += `
-      background-color: #ffeb3b !important;
-      padding: 2px 4px !important;
-      border-radius: 3px !important;
-      box-shadow: 0 0 0 2px rgba(255, 235, 59, 0.3) !important;
-      transition: all 0.3s ease !important;
-    `
+      if (!targetHash || targetHash.length <= 1) {
+        console.log('No hash or hash too short, returning')
+        return
+      }
 
-    // Rimuovere l'evidenziazione dopo 5 secondi
-    setTimeout(() => {
-      element.classList.remove('aion-search-highlight')
-      element.style.cssText = originalStyle
-    }, 5000)
+      if (targetHash.startsWith('#offset-')) {
+        console.log('Offset hash detected, calling scrollToOffset')
+        this.scrollToOffset(targetHash)
+      } else {
+        console.log('Normal anchor hash, using vuetify goTo')
+        this.$vuetify.goTo(decodeURIComponent(targetHash), this.scrollOpts)
+      }
+      console.log('=== handleHashNavigation END ===')
+    },
 
-    // Aggiungere un piccolo effetto di "pulsazione"
-    setTimeout(() => {
-      element.style.transform = 'scale(1.02)'
+    // METODO MIGLIORATO: scrollToOffset con validazione
+    scrollToOffset(hash) {
+      console.log('=== scrollToOffset START ===')
+      console.log('scrollToOffset called with hash:', hash)
+
+      // Prima validiamo l'offset
+      const isValid = this.validateOffset(hash)
+      if (!isValid) {
+        console.warn('Offset validation failed, using fallback')
+      }
+
+      try {
+        const offsetStr = hash.replace('#offset-', '').split('-')[0]
+        const startOffset = parseInt(offsetStr)
+
+        if (isNaN(startOffset) || startOffset < 0) {
+          console.warn('Invalid offset:', startOffset)
+          return
+        }
+
+        const contentContainer = this.$refs.container
+        if (!contentContainer) {
+          console.warn('No content container found')
+          return
+        }
+
+        // METODO MIGLIORATO: Trova l'elemento più preciso
+        const targetElement = this.findElementByTextOffset(contentContainer, startOffset)
+
+        if (targetElement) {
+          console.log('Found precise target element')
+
+          // Calcola la posizione esatta considerando l'offset all'interno dell'elemento
+          const elementOffset = this.calculateElementOffset(targetElement, startOffset)
+
+          const elementRect = targetElement.getBoundingClientRect()
+          const scrollTop = window.pageYOffset + elementRect.top - 150 + elementOffset
+
+          console.log('Precise scroll position:', scrollTop)
+
+          window.scrollTo({
+            top: Math.max(0, scrollTop),
+            behavior: 'smooth'
+          })
+
+          setTimeout(() => {
+            this.highlightFoundElement(targetElement, startOffset)
+          }, 1000)
+
+        } else {
+          console.log('Element not found, using text-based calculation')
+          this.scrollToOffsetByTextAnalysis(startOffset)
+        }
+
+      } catch (error) {
+        console.error('Error in scrollToOffset:', error)
+        window.scrollTo(0, 0)
+      }
+    },
+
+    // NUOVO METODO: Calcola offset all'interno dell'elemento
+    calculateElementOffset(element, globalOffset) {
+      try {
+        const container = this.$refs.container
+        const fullText = container.innerText || container.textContent
+        const elementText = element.innerText || element.textContent
+
+        // Trova dove inizia questo elemento nel testo globale
+        const elementStartInGlobal = fullText.indexOf(elementText)
+
+        if (elementStartInGlobal === -1) {
+          return 0 // Non trovato, usa inizio elemento
+        }
+
+        // Calcola l'offset relativo all'interno dell'elemento
+        const relativeOffset = globalOffset - elementStartInGlobal
+
+        console.log('Element text length:', elementText.length)
+        console.log('Element starts at global offset:', elementStartInGlobal)
+        console.log('Relative offset within element:', relativeOffset)
+
+        // Se l'offset è all'interno dell'elemento, calcola la posizione verticale
+        if (relativeOffset >= 0 && relativeOffset < elementText.length) {
+          // Stima approssimativa: 60 caratteri per riga, 24px per riga
+          const charsPerLine = 60
+          const lineHeight = 24
+          const linesIntoElement = Math.floor(relativeOffset / charsPerLine)
+
+          return linesIntoElement * lineHeight
+        }
+
+        return 0
+
+      } catch (error) {
+        console.error('Error calculating element offset:', error)
+        return 0
+      }
+    },
+
+    // NUOVO METODO: Scroll basato su analisi del testo
+    scrollToOffsetByTextAnalysis(targetOffset) {
+      console.log('Using text analysis for offset:', targetOffset)
+
+      const container = this.$refs.container
+      const fullText = container.innerText || container.textContent
+
+      // Metodo più sofisticato: conta paragrafi e righe
+      const textLines = fullText.split('\n')
+      let currentOffset = 0
+      let targetLine = 0
+
+      for (let i = 0; i < textLines.length; i++) {
+        const lineLength = textLines[i].length + 1 // +1 per il \n
+
+        if (currentOffset + lineLength > targetOffset) {
+          targetLine = i
+          break
+        }
+
+        currentOffset += lineLength
+      }
+
+      console.log('Target line:', targetLine, 'of', textLines.length)
+
+      // Stima la posizione verticale
+      const lineHeight = 24
+      const scrollPosition = Math.max(0, targetLine * lineHeight - 150)
+
+      console.log('Text analysis scroll position:', scrollPosition)
+
+      window.scrollTo({
+        top: scrollPosition,
+        behavior: 'smooth'
+      })
+    },
+
+    // NUOVO METODO: Trova l'elemento basato sull'offset di testo
+    findElementByTextOffset(container, targetOffset) {
+      console.log('=== findElementByTextOffset START ===')
+
+      let currentOffset = 0
+      const walker = document.createTreeWalker(
+        container,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      )
+
+      let node
+      while (node = walker.nextNode()) {
+        const nodeText = node.textContent
+        const nodeLength = nodeText.length
+
+        console.log(`Checking node: "${nodeText.substring(0, 50)}..." (length: ${nodeLength}, current offset: ${currentOffset})`)
+
+        if (currentOffset + nodeLength >= targetOffset) {
+          console.log('Found target node!')
+          const element = node.parentElement
+          console.log('Parent element:', element.tagName, element.className)
+          return element
+        }
+
+        currentOffset += nodeLength
+      }
+
+      console.log('Target element not found')
+      return null
+    },
+
+    // METODO MIGLIORATO: Evidenziazione più precisa
+    highlightFoundElement(element, offset) {
+      console.log('=== highlightFoundElement START ===')
+      console.log('Highlighting element for offset:', offset)
+
+      if (!element) return
+
+      // Evidenziazione migliorata
+      const originalStyles = {
+        backgroundColor: element.style.backgroundColor,
+        padding: element.style.padding,
+        borderRadius: element.style.borderRadius,
+        boxShadow: element.style.boxShadow,
+        transform: element.style.transform
+      }
+
+      // Applicare stili di evidenziazione
+      element.style.backgroundColor = '#ffeb3b'
+      element.style.padding = '8px 12px'
+      element.style.borderRadius = '6px'
+      element.style.boxShadow = '0 0 0 3px rgba(255, 235, 59, 0.4)'
+      element.style.transition = 'all 0.3s ease'
+
+      // Effetto di "pulsazione"
       setTimeout(() => {
-        element.style.transform = 'scale(1)'
-      }, 200)
-    }, 100)
-  }
-    
+        element.style.transform = 'scale(1.02)'
+        setTimeout(() => {
+          element.style.transform = 'scale(1)'
+        }, 200)
+      }, 100)
 
- 
-  }
+      // Scroll fine per centrare meglio l'elemento
+      setTimeout(() => {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        })
+      }, 500)
 
-  
+      // Rimuovere evidenziazione dopo 6 secondi
+      setTimeout(() => {
+        console.log('Removing highlight...')
+        Object.keys(originalStyles).forEach(key => {
+          element.style[key] = originalStyles[key]
+        })
+      }, 6000)
+
+      console.log('=== highlightFoundElement END ===')
+    }
+  }
 }
 </script>
 
 <style lang="scss">
-
 .breadcrumbs-nav {
   .v-btn {
     min-width: 0;
+
     &__content {
       text-transform: none;
     }
   }
+
   .v-breadcrumbs__divider:nth-child(2n) {
     padding: 0 6px;
   }
+
   .v-breadcrumbs__divider:nth-child(2) {
     padding: 0 6px 0 12px;
   }
@@ -914,7 +1095,7 @@ export default {
 .page-header-section {
   position: relative;
 
-  > .is-page-header {
+  >.is-page-header {
     position: relative;
   }
 
@@ -964,7 +1145,8 @@ export default {
 
 .aion-search-highlight {
   position: relative;
-  scroll-margin-top: 100px; /* Assicura che l'elemento non sia nascosto dall'header */
+  scroll-margin-top: 100px;
+  /* Assicura che l'elemento non sia nascosto dall'header */
 }
 
 /* Animazione di evidenziazione */
@@ -973,10 +1155,12 @@ export default {
     background-color: #ffeb3b;
     box-shadow: 0 0 0 2px rgba(255, 235, 59, 0.6);
   }
+
   50% {
     background-color: #fff176;
     box-shadow: 0 0 0 4px rgba(255, 235, 59, 0.4);
   }
+
   100% {
     background-color: #ffeb3b;
     box-shadow: 0 0 0 2px rgba(255, 235, 59, 0.6);
@@ -1023,5 +1207,4 @@ export default {
     animation: none !important;
   }
 }
-
 </style>

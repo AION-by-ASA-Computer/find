@@ -376,6 +376,9 @@ module.exports = {
    * @param {String} query Search query
    * @param {Object} opts Search options
    */
+  // MODIFICA DEL FILE server/modules/search/aion/engine.js
+  // Trova la funzione _semanticSearch e sostituisci la parte di mappatura dei risultati:
+
   async _semanticSearch(query, opts) {
     let attempt = 0
     const maxAttempts = 2
@@ -413,24 +416,68 @@ module.exports = {
           WIKI.logger.info(`(SEARCH/AION) Semantic search completed: ${searchResults.total_found} results in ${searchResults.processing_time_ms}ms`)
           WIKI.logger.info(`(SEARCH/AION) Strategy: ${searchResults.search_strategy}`)
 
-          const wikiResults = searchResults.results.map(result => ({
-            id: result.id,
-            path: result.path,
-            title: result.title,
-            description: this._extractDescription(result.content_preview),
-            locale: result.metadata.locale || opts.locale || 'en',
-            offset: result.chunk_info?.start_offset || result.offset || 0  // <- AGGIUNGI QUESTA RIGA
-          }))
+          // DEBUG: Log della risposta completa di AION
+          WIKI.logger.debug(`(SEARCH/AION) Full response from AION:`, JSON.stringify(searchResults, null, 2))
+
+          // Transform AION results to Wiki.js format
+          const wikiResults = searchResults.results.map((result, index) => {
+            // DEBUG: Log di ogni singolo risultato
+            // console.log(`(SEARCH/AION) Processing result ${index}:`, JSON.stringify(result, null, 2))
+
+            // Estrarre offset con vari fallback
+            let offset = 0
+
+            console.log(result)
+
+            // Tentativo 1: chunk_info.start_offset
+            if (result.chunk_info && typeof result.chunk_info.start_offset === 'number') {
+              offset = result.chunk_info.start_offset
+              WIKI.logger.debug(`(SEARCH/AION) Found offset in chunk_info.start_offset: ${offset}`)
+            }
+            // Tentativo 2: offset diretto
+            else if (typeof result.metadata.offset === 'number') {
+
+              
+
+              offset = result.metadata.offset
+              WIKI.logger.debug(`(SEARCH/AION) Found offset in result.offset: ${offset}`)
+            }
+            // Tentativo 3: start_offset diretto
+            else if (typeof result.start_offset === 'number') {
+              offset = result.start_offset
+              WIKI.logger.debug(`(SEARCH/AION) Found offset in result.start_offset: ${offset}`)
+            }
+            // Tentativo 4: fallback casuale per test
+            else {
+              offset = Math.floor(Math.random() * 2000) + 100 // Offset casuale per test
+              WIKI.logger.warn(`(SEARCH/AION) No offset found in result, using random test offset: ${offset}`)
+            }
+
+            const mappedResult = {
+              id: result.id,
+              path: result.path,
+              title: result.title,
+              description: this._extractDescription(result.content_preview),
+              locale: result.metadata?.locale || opts.locale || 'en',
+              score: result.relevance_score,
+              offset: offset
+            }
+
+            WIKI.logger.debug(`(SEARCH/AION) Mapped result:`, JSON.stringify(mappedResult, null, 2))
+
+            return mappedResult
+          })
+
+          WIKI.logger.info(`(SEARCH/AION) Mapped ${wikiResults.length} results with offsets`)
 
           return {
             results: wikiResults,
             suggestions: this._generateSuggestions(query, wikiResults),
             totalHits: searchResults.total_found,
-            // Mappare ai nomi del schema GraphQL
-            aionInfo: {
+            _aion_info: {
               strategy: searchResults.search_strategy,
-              processingTime: searchResults.processing_time_ms,
-              serviceUsed: 'aion_semantic'
+              processing_time: searchResults.processing_time_ms,
+              service_used: 'aion_semantic'
             }
           }
         } else {
@@ -443,7 +490,18 @@ module.exports = {
 
         if (attempt >= maxAttempts) {
           WIKI.logger.error(`(SEARCH/AION) Semantic search failed after ${maxAttempts} attempts`)
-          throw new Error(`AION semantic search failed: ${errorMsg}`)
+
+          // Se il semantic search fallisce, usa il fallback ma aggiungi offset casuali per test
+          WIKI.logger.info(`(SEARCH/AION) Falling back to database search with test offsets`)
+          const fallbackResults = await this._fallbackQuery(query, opts)
+
+          // Aggiungi offset casuali ai risultati di fallback per test
+          fallbackResults.results = fallbackResults.results.map(result => ({
+            ...result,
+            offset: Math.floor(Math.random() * 1500) + 200 // Offset casuale per test
+          }))
+
+          return fallbackResults
         }
 
         // Brief delay before retry
